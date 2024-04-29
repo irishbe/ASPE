@@ -1,6 +1,8 @@
 #include <fstream>
-#include<stdlib.h>
-#include<iostream>
+#include <stdlib.h>
+#include <iostream>
+#include <locate.h>
+#include <ctime>
 using namespace std;
 
 const char *nombre_archivo = "archivos.txt";
@@ -21,8 +23,8 @@ int main(){
     int opcion;
 	
     do {
-        // Mostramos el menú
-        cout << "\nMenú de opciones:\n";
+        // Mostramos el menÃº
+        cout << "\nMenÃº de opciones:\n";
         cout << "1. Actualizar\n";
         cout << "2. Crear\n";
         cout << "3. Mostrar\n";
@@ -30,11 +32,11 @@ int main(){
         cout << "5. Marcar tarea como terminada\n";
         cout << "6. Salir\n";
 
-        // Solicitamos la opción al usuario
-        cout << "Seleccione una opción: ";
+        // Solicitamos la opciÃ³n al usuario
+        cout << "Seleccione una opciÃ³n: ";
         cin >> opcion;
 
-        // Ejecutamos la función correspondiente según la opción seleccionada
+        // Ejecutamos la funciÃ³n correspondiente segÃºn la opciÃ³n seleccionada
         switch (opcion) {
             case 1:
                 actualizar();
@@ -55,7 +57,7 @@ int main(){
                 cout << "Saliendo del programa...\n";
                 break;
             default:
-                cout << "Opción no válida. Por favor, seleccione una opción válida.\n";
+                cout << "OpciÃ³n no vÃ¡lida. Por favor, seleccione una opciÃ³n vÃ¡lida.\n";
         }
 
     } while (opcion != 6);
@@ -80,7 +82,7 @@ void crear(){
         
         fwrite(&tarea1,sizeof(tareas),1,variable);
         
-        cout << "¿Desea añadir otra tarea? (S/N): ";
+        cout << "Â¿Desea aÃ±adir otra tarea? (S/N): ";
         cin >> opcion;
             
     } while(opcion == 's' || opcion == 'S');
