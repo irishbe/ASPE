@@ -27,5 +27,18 @@ string formato_fecha(Fecha x){
 }
 
 string formato_hora(Fecha x){
-	return (to_string(x.horas) + ":" + to_string(x.minutos) + ":" + to_string(x.seg));
+	string corregir_min, corregir_seg;
+	
+	if(x.minutos<10){
+		corregir_min = "0" + to_string(x.minutos);
+	}else{
+		corregir_min = to_string(x.minutos);
+	}
+	
+	if(x.seg<10){
+		corregir_seg = "0" + to_string(x.seg);
+	}else{
+		corregir_seg = to_string(x.seg);
+	}
+	return (to_string(x.horas) + ":" + corregir_min + ":" + corregir_seg);
 }
