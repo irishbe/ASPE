@@ -1,12 +1,18 @@
 #include <iostream>
 #include <ctime>
+#include <sstream>
 using namespace std;
-
 
 struct Fecha{
 	long segundos;
-	int dias, meses, anios, minutos, horas, seg;
+	short dias, meses, anios, minutos, horas, seg;
 };
+
+string to_string(short x) {
+    ostringstream oss;
+    oss << x;
+    return oss.str();
+}
 
 Fecha definir_fecha(short d, short h, short m, short s){
 	Fecha aux;
@@ -26,6 +32,7 @@ string formato_fecha(Fecha x){
 	return (to_string(x.dias) + "/" + to_string(x.meses) + "/" + to_string(x.anios));
 }
 
+/*
 string formato_hora(Fecha x){
 	string corregir_min, corregir_seg;
 	
@@ -41,4 +48,4 @@ string formato_hora(Fecha x){
 		corregir_seg = to_string(x.seg);
 	}
 	return (to_string(x.horas) + ":" + corregir_min + ":" + corregir_seg);
-}
+}*/
