@@ -4,7 +4,7 @@
 using namespace std;
 
 struct Fecha{
-	long segundos;
+	long segreales;
 	short dias, meses, anios, minutos, horas, seg;
 };
 
@@ -25,6 +25,7 @@ Fecha definir_fecha(short d, short h, short m, short s){
 	aux.minutos = f->tm_min;
 	aux.horas = f->tm_hour;
 	aux.seg = f->tm_sec;
+	aux.segreales = time(NULL) + d*86400 + h*3600 + m*60 + s;
 	return (aux);
 }
 
@@ -32,9 +33,8 @@ string formato_fecha(Fecha x){
 	return (to_string(x.dias) + "/" + to_string(x.meses) + "/" + to_string(x.anios));
 }
 
-/*
 string formato_hora(Fecha x){
-	string corregir_min, corregir_seg;
+	string corregir_min;
 	
 	if(x.minutos<10){
 		corregir_min = "0" + to_string(x.minutos);
@@ -42,10 +42,5 @@ string formato_hora(Fecha x){
 		corregir_min = to_string(x.minutos);
 	}
 	
-	if(x.seg<10){
-		corregir_seg = "0" + to_string(x.seg);
-	}else{
-		corregir_seg = to_string(x.seg);
-	}
-	return (to_string(x.horas) + ":" + corregir_min + ":" + corregir_seg);
-}*/
+	return (to_string(x.horas) + ":" + corregir_min);
+}
