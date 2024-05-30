@@ -5,26 +5,26 @@
 
 using namespace std;
 
-struct flashcard{
-	string tema;
-	string contenido;
-	int id;
-	
-};
-//Nombre del directorio o carpeta
+string tema, contenido;
+
+// Nombre del directorio o carpeta
 const string directorio = "Sistema de Flashcards";
 
+int n = 0, i, id;
+
+string* nombresMazos = nullptr;
+
 string ruta(string nombreArchivo){
-	return (directorio + "/" + nombreArchivo + ".txt");
+	return (directorio + "/" + nombreArchivo);
 }
 
 void escribir();
 void lectura();
 void aniadir();
 
-void MenuCartas();
+void menuCartas();
 void crearMazo();
-void mostrarMazos();
+void mostrarMazos(bool soloLectura);
 void renombrarMazo();
 void eliminarMazo();
 void crearCarta();
@@ -66,7 +66,7 @@ int main() {
 				break;
 			}
 			case '2': {
-				mostrarMazos();
+				mostrarMazos(false);
 				break;
 			}
 			case '3': {
@@ -99,32 +99,32 @@ void menuCartas() {
 		// Mostramos el menú de opciones del contenedor
 		cout << "\nFLASHCARDS\n";
 		cout << "\nMenú de opciones:\n";
-        cout << "1. Añadir flashcards\n";
+        cout << "1. Crear flashcards\n";
         cout << "2. Mostrar flashcards\n";
         cout << "3. Editar flashcards\n";
         cout << "4. Eliminar flashcard\n";
         cout << "0. Salir\n";
         
+        
         // Solicitamos la opción al usuario
-		cout << "Seleccione una opción: ";
-		cin >> opcion;
+		cout << "Seleccione una opción: "; cin >> opcion;
 		
 		// Ejecutamos la función correspondiente según la opción seleccionada
 		switch (opcion) {
 			case 1: {
-				//-----------------------
+				crearCarta();
 				break;
 			}
 			case 2: {
-				//-----------------------
+				mostrarCartas();
 				break;
 			}
 			case 3: {
-				//-----------------------
+				editarCarta();
 				break;
 			}
 			case 4: {
-				//-----------------------
+				eliminarCarta();
 				break;
 			}
 			default: {
@@ -151,7 +151,7 @@ void crearMazo() {
 	archivo.close();
 }
 
-void mostrarMazos() {
+void mostrarMazos(bool soloLectura) {
 	// Almacena la informacion de un archivo
 	_finddata_t archivo;
 	
@@ -160,44 +160,107 @@ void mostrarMazos() {
 	
 	// Verifica si la busqueda fue exitosa
 	if (verificador != -1) {
+		
+		//Hallar la cantidad de mazos
 		do {
-			cout << archivo.name << endl;
+			n++;	
 		} while (_findnext(verificador, &archivo) == 0);
 		
-		_findclose(verificador);	
+		_findclose(verificador);
+		
+		// Define el vector global nombresMazos
+		nombresMazos = new string [n];
+		// Almacena en el vector los nombres de los mazos y los muestra
+		verificador = _findfirst( (directorio + "//" + "*.txt").c_str() , &archivo);
+		
+		i=0;
+		do {
+			nombresMazos[i] = archivo.name;
+			cout << i << ' ' << nombresMazos[i] << endl;
+			i++;
+		} while (_findnext(verificador, &archivo) == 0);
+		_findclose(verificador);
+		
+		if (soloLectura == false) {
+			menuCartas();
+		} 	
 	} else {
 		cout << "No se encontraron mazos en el directorio" << endl;
 	}
 }
 
 void renombrarMazo() {
-	mostrarMazos();
-	string antiguo, nuevo;
+	mostrarMazos(true);
+	string nuevoNombre;
 	
 	fflush(stdin);
-	cout << "Nombre del mazo que desea renombrar: "; getline(cin, antiguo);
-	cout << "Nuevo nombre del mazo: "; getline(cin, nuevo);
+	cout << "ID del mazo que desea renombrar: "; cin >> id;
+	// Extrae el nombre del mazo a partir del id
+	fflush(stdin);
+	cout << "Nuevo nombre del mazo: "; getline(cin, nuevoNombre);
 	
-	if (rename (ruta(antiguo).c_str(), ruta(nuevo).c_str() ) != 0) {
+	if (rename (ruta(nombresMazos[id]).c_str(), ruta(nuevoNombre + ".txt").c_str() ) != 0) {
         cout << "Error al renombrar el mazo." << endl;
     } else {
     	cout << "El nombre del mazo se ha cambiado correctamente" << endl;
 	}
+	system("pause");
     
 }
 
 void eliminarMazo() {
-	mostrarMazos();
-	string nombreMazo;
+	mostrarMazos(true);
+	int id;
 	
 	fflush(stdin);
-	cout << "Nombre del mazo que desea eliminar: "; getline(cin, nombreMazo);
+	cout << "ID del mazo que desea eliminar: "; cin >> id;
 	
-	if (remove( ruta(nombreMazo).c_str() ) != 0) {
+	if (remove( ruta(nombresMazos[id]).c_str() ) != 0) {
         cout << "Error al eliminar el mazo." << endl;
     } else {
     	cout << "El mazo se ha eliminado correctamente" << endl;
 	}
+}
+
+void crearCarta() {
+	string nombreMazo;
+	bool continuar;
+	
+	mostrarMazos(true);
+	
+	fflush(stdin);
+	cout << "ID del mazo: "; cin >> id;
+	
+	ofstream mazo;
+	mazo.open( ruta(nombresMazos[id]), ios::app );
+	
+	if(mazo.fail()){
+		cout<<"No se pudo abrir el mazo"<<endl;
+		return;
+	}
+	
+	do {
+		fflush(stdin);
+		cout << "Tema: "; getline(cin, tema);
+		cout << "Contenido: "; getline(cin, contenido);
+		mazo << "t:: " << tema << endl << "c:: " << contenido << endl << endl;
+		cout << "Desea agregar más flashcards (Sí = 1) (No = 0): ";
+		cin >> continuar;
+	} while (continuar);
+	
+	mazo.close();
+}
+
+void mostrarCartas() {
+	
+}
+
+void editarCarta() {
+	
+}
+
+void eliminarCarta() {
+	
 }
 
 //ELIMianRARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
@@ -224,12 +287,9 @@ void aniadir(){
 	ofstream archivo; //Abrir el archivo para escritura
 	string texto;
 	
-	archivo.open("flashcards.txt",ios::app); //Abrimos el archivo en modo añadir
+	 //Abrimos el archivo en modo añadir
 	
-	if(archivo.fail()){
-		cout<<"No se pudo abrir el archivo"<<endl;
-		return;
-	}
+	
 	
 	cout<<"Digite el texto que quiere añadir: ";
 	getline(cin, texto);
