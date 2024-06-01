@@ -5,15 +5,12 @@
 
 using namespace std;
 
-string tema, contenido;
-
-// Nombre del directorio o carpeta
-const string directorio = "Sistema de Flashcards";
-
-int n = 0, i, id;
-
-string* nombresMazos = nullptr;
-
+// Nombre del directorio o carpeta para almacenar los mazos
+const string directorio = "Mazos ASPE";
+//Variables globales
+int n = 0, i, id, idMazo, idCarta;
+string tema, contenido, *nombresMazos = nullptr;
+//Genera la ruta de la carpeta Mazos ASPE
 string ruta(string nombreArchivo){
 	return (directorio + "/" + nombreArchivo);
 }
@@ -32,9 +29,7 @@ int main() {
 	string opcion;
 	
 	// Crear el directorio  o carpeta
-	if (_mkdir(directorio.c_str())) {
-		cout << "Ha ocurrido un error en la creación de la carpeta";
-	}
+	_mkdir(directorio.c_str() );
 	
 	do{
 		// Mostramos el menú de opciones del contenedor
@@ -83,6 +78,7 @@ int main() {
 				break;
 			}
 		}
+		system("pause");
 		system("cls");
 	} while (opcion[0] != '0');
 }
@@ -105,6 +101,7 @@ void menuCartas() {
 		cout << "Seleccione una opción: "; cin >> opcion;
 		
 		// Ejecutamos la función correspondiente según la opción seleccionada
+		system("cls");
 		switch (opcion) {
 			case 1: {
 				crearCarta();
@@ -124,10 +121,11 @@ void menuCartas() {
 			}
 			default: {
 				cout << "Opción no válida. Por favor, seleccione una opción válida.\n";
-				system("pause");
 				break;
 			}
 		}
+		system("pause");
+		system("cls");
 	} while (opcion != 0);
 }
 
@@ -156,6 +154,7 @@ void mostrarMazos(bool soloLectura) {
 	intptr_t verificador = _findfirst( (directorio + "//" + "*.txt").c_str() , &archivo);
 	
 	// Verifica si la busqueda fue exitosa
+	n=0;
 	if (verificador != -1) {
 		
 		//Hallar la cantidad de mazos
@@ -200,13 +199,10 @@ void renombrarMazo() {
     } else {
     	cout << "El nombre del mazo se ha cambiado correctamente" << endl;
 	}
-	system("pause");
-    
 }
 
 void eliminarMazo() {
 	mostrarMazos(true);
-	int id;
 	
 	fflush(stdin);
 	cout << "ID del mazo que desea eliminar: "; cin >> id;
@@ -224,10 +220,10 @@ void crearCarta() {
 	mostrarMazos(true);
 	
 	fflush(stdin);
-	cout << "ID del mazo: "; cin >> id;
+	cout << "ID del mazo: "; cin >> idMazo;
 	
 	ofstream mazo;
-	mazo.open( ruta(nombresMazos[id]), ios::app ); // ios::app permite añadir o adjuntar contenido al archivo
+	mazo.open( ruta(nombresMazos[idMazo]), ios::app ); // ios::app permite añadir o adjuntar contenido al archivo
 	
 	if(mazo.fail()){
 		cout<<"No se pudo abrir el mazo"<<endl;
@@ -250,10 +246,10 @@ void mostrarCartas() {
 	mostrarMazos(true);
 	
 	fflush(stdin);
-	cout << "ID del mazo: "; cin >> id;
+	cout << "ID del mazo: "; cin >> idMazo;
 	
 	ifstream mazo;
-	mazo.open( ruta(nombresMazos[id]), ios::in );
+	mazo.open( ruta(nombresMazos[idMazo]), ios::in );
 	
 	string linea, tema = "", contenido = "";
 	id = 0;
@@ -273,7 +269,7 @@ void mostrarCartas() {
 			if( getline(mazo, linea) && linea.substr(0,4) == "c:: " ){
 				contenido = linea.substr(4);
 				
-				// Impresion de datos, r
+				// Impresion de datos
 				cout<<"\nID Flashcard: "<<id<<endl;
 				cout<<"Tema: "<<tema<<endl;
 				cout<<"Contenido: "<<contenido<<endl;
@@ -284,16 +280,130 @@ void mostrarCartas() {
 	
 	//En caso de no encontrar flashcards
 	if( id == 0 ){
-		cout << "\nNo se encontraron cartas en el mazo..." << endl;
+		cout << "\nNo se encontraron cartas en el mazo..." << endl << endl;
 	}
 	
 	mazo.close();
 }
 
 void editarCarta() {
+	mostrarCartas();
 	
+	fflush(stdin);
+	cout << "\nID de la flashcard que desea actualizar"; cin >> idCarta; 
+	
+	ifstream mazo;
+	mazo.open( ruta(nombresMazos[idMazo]), ios::in);
+	
+	ofstream temp;
+	temp.open( ruta("temp.txt"), ios::out);
+	
+	
+	//Bucle para recorrer
+	string linea, nuevoTema, nuevoContenido;
+	id = 0;
+	
+	while( getline(mazo,linea) ){
+		
+		// Verifica si la linea esta vacia y la saltea;
+		if( linea.empty() == true){
+			continue;
+		}
+		
+		// Si encuentra t:: en linea
+		if( linea.substr(0,4) == "t:: "){
+			
+			if (id == idCarta) {
+				fflush(stdin);
+				cout << "Nuevo tema: "; getline(cin, nuevoTema);
+				temp<<"t:: "<<nuevoTema<<endl;
+			}else{
+				temp << endl << linea <<endl;
+			}
+			
+			// Si encuentra c:: en la linea
+			if( getline(mazo, linea) && linea.substr(0,4) == "c:: " ){
+				
+				if (id == idCarta) {
+					fflush(stdin);
+					cout << "Nuevo contenido: "; getline(cin, nuevoContenido);
+					temp << "c:: " << nuevoContenido << endl << endl;
+				}else{
+					temp << linea << endl <<endl;
+				}
+
+				id++;
+			}
+		}	
+	}
+	
+	mazo.close();
+	temp.close();
+	remove( ruta(nombresMazos[idMazo]).c_str());
+	
+	//En caso de no encontrar flashcards
+	if( id == 0 ){
+		cout<<"\nNo se encontraron cartas en el mazo..."<<endl<<endl;
+	}else{
+		//Conviertiendo temp al nuevo mazo
+	    rename( ruta("temp.txt").c_str(), ruta(nombresMazos[idMazo]).c_str());
+	    cout << "\nFlashcard actualizada correctamente." << endl<<endl;		
+	}
 }
 
-void eliminarCarta() {
+void eliminarCarta(){	
+	mostrarCartas();
+	fflush(stdin);
+	cout << "\nID de la flashcard que desea eliminar"; cin >> idCarta; // Extrae el nombre del mazo a partir del id
 	
+	
+	ifstream mazo;
+	mazo.open( ruta(nombresMazos[idMazo]), ios::in);
+	
+	ofstream temp;
+	temp.open( ruta("temp.txt"), ios::out);
+	
+	
+	//Bucle para recorrer
+	string linea, nuevoTema, nuevoContenido;
+	id = 0;
+	
+	while( getline(mazo,linea) ){
+		
+		// Verifica si la linea esta vacia y la saltea;
+		if( linea.empty() == true){
+			continue;
+		}
+		
+		// Si encuentra t:: en linea
+		if( linea.substr(0,4) == "t:: "){
+			
+			if (id != idCarta) {
+				temp << endl << linea <<endl;
+			}
+			
+			// Si encuentra c:: en la linea
+			if( getline(mazo, linea) && linea.substr(0,4) == "c:: " ){
+				
+				if (id != idCarta) {
+					temp << linea << endl << endl;
+				}
+
+				id++;
+			}
+		}	
+	}
+	
+	mazo.close();
+	temp.close();
+	remove( ruta(nombresMazos[idMazo]).c_str());
+	
+	//En caso de no encontrar flashcards
+	if( id == 0 ){
+		cout<<"\nNo se encontraron cartas en el mazo..."<<endl<<endl;
+	}else{
+		//Conviertiendo temp al nuevo mazo
+	    rename( ruta("temp.txt").c_str(), ruta(nombresMazos[idMazo]).c_str());
+	    cout << "\nFlashcard eliminada correctamente." << endl << endl;		
+	}
 }
