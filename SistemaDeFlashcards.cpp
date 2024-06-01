@@ -18,10 +18,6 @@ string ruta(string nombreArchivo){
 	return (directorio + "/" + nombreArchivo);
 }
 
-void escribir();
-void lectura();
-void aniadir();
-
 void menuCartas();
 void crearMazo();
 void mostrarMazos(bool soloLectura);
@@ -31,7 +27,6 @@ void crearCarta();
 void mostrarCartas();
 void editarCarta();
 void eliminarCarta();
-
 
 int main() {
 	string opcion;
@@ -129,6 +124,7 @@ void menuCartas() {
 			}
 			default: {
 				cout << "Opción no válida. Por favor, seleccione una opción válida.\n";
+				system("pause");
 				break;
 			}
 		}
@@ -137,18 +133,19 @@ void menuCartas() {
 
 void crearMazo() {
 	string nombreMazo;
+	ofstream mazo;
 	
 	fflush(stdin);
 	cout << "Nombre del mazo: "; getline(cin, nombreMazo);
 	
 	// Crea un archivo en una carpeta
-	ofstream archivo(ruta(nombreMazo));
+	mazo.open(ruta(nombreMazo + ".txt"), ios::out);
 	
-	if(archivo.fail()) {
+	if(mazo.fail()) {
 		cout << "No se pudo crear el mazo" << endl;
 	}
 	
-	archivo.close();
+	mazo.close();
 }
 
 void mostrarMazos(bool soloLectura) {
@@ -194,8 +191,7 @@ void renombrarMazo() {
 	string nuevoNombre;
 	
 	fflush(stdin);
-	cout << "ID del mazo que desea renombrar: "; cin >> id;
-	// Extrae el nombre del mazo a partir del id
+	cout << "ID del mazo que desea renombrar: "; cin >> id; // Extrae el nombre del mazo a partir del id
 	fflush(stdin);
 	cout << "Nuevo nombre del mazo: "; getline(cin, nuevoNombre);
 	
@@ -223,7 +219,6 @@ void eliminarMazo() {
 }
 
 void crearCarta() {
-	string nombreMazo;
 	bool continuar;
 	
 	mostrarMazos(true);
@@ -232,7 +227,7 @@ void crearCarta() {
 	cout << "ID del mazo: "; cin >> id;
 	
 	ofstream mazo;
-	mazo.open( ruta(nombresMazos[id]), ios::app );
+	mazo.open( ruta(nombresMazos[id]), ios::app ); // ios::app permite añadir o adjuntar contenido al archivo
 	
 	if(mazo.fail()){
 		cout<<"No se pudo abrir el mazo"<<endl;
@@ -252,7 +247,47 @@ void crearCarta() {
 }
 
 void mostrarCartas() {
+	mostrarMazos(true);
 	
+	fflush(stdin);
+	cout << "ID del mazo: "; cin >> id;
+	
+	ifstream mazo;
+	mazo.open( ruta(nombresMazos[id]), ios::in );
+	
+	string linea, tema = "", contenido = "";
+	id = 0;
+	
+	while( getline(mazo, linea) ){ // Mientras se logre leer una linea en el mazo
+		
+		// Verifica si la linea esta vacia y la saltea;
+		if( linea.empty() == true){
+			continue;
+		}
+		
+		// Si encuentra t:: en linea
+		if( linea.substr(0,4) == "t:: "){
+			tema = linea.substr(4);
+			
+			// Si encuentra c:: en la siguiente linea
+			if( getline(mazo, linea) && linea.substr(0,4) == "c:: " ){
+				contenido = linea.substr(4);
+				
+				// Impresion de datos, r
+				cout<<"\nID Flashcard: "<<id<<endl;
+				cout<<"Tema: "<<tema<<endl;
+				cout<<"Contenido: "<<contenido<<endl;
+				id++;
+			}
+		}	
+	}
+	
+	//En caso de no encontrar flashcards
+	if( id == 0 ){
+		cout << "\nNo se encontraron cartas en el mazo..." << endl;
+	}
+	
+	mazo.close();
 }
 
 void editarCarta() {
@@ -261,40 +296,4 @@ void editarCarta() {
 
 void eliminarCarta() {
 	
-}
-
-//ELIMianRARRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
-
-void lectura(){
-	ifstream archivo; //-----Escribir texto
-	string texto;
-	
-	archivo.open("flashcards.txt",ios::in); //Abrir el archivo en modo lectura
-	
-	if(archivo.fail()){
-		cout<<"No se pudo abrir el archivo";
-		return;
-	}
-	
-	while(getline(archivo, texto)){ //Mientras el archivo no esté en el final
-		cout<<texto<<endl;
-	}
-	
-	archivo.close();
-}
-
-void aniadir(){
-	ofstream archivo; //Abrir el archivo para escritura
-	string texto;
-	
-	 //Abrimos el archivo en modo añadir
-	
-	
-	
-	cout<<"Digite el texto que quiere añadir: ";
-	getline(cin, texto);
-	
-	archivo<<texto<<endl;
-	
-	archivo.close(); //Cerramos el archivo
 }
