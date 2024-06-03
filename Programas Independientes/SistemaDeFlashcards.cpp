@@ -1,35 +1,49 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <direct.h>
+#include <windows.h>
 
 using namespace std;
 
 // Nombre del directorio o carpeta para almacenar los mazos
 const string directorio = "Mazos ASPE";
+const string dirRepaso = "Repaso";
+
 //Variables globales
 int n = 0, i, id, idMazo, idCarta;
 string tema, contenido, *nombresMazos = nullptr;
-//Genera la ruta de la carpeta Mazos ASPE
-string ruta(string nombreArchivo){
-	return (directorio + "/" + nombreArchivo);
+
+//Funciones para generar rutas
+string ruta(string nombreArchivo) {
+    return (directorio + "/" + nombreArchivo);
+}
+string rutaRepaso(string nombreArchivo) {
+    return (directorio + "/" + dirRepaso + "/" + nombreArchivo);
 }
 
-void menuCartas();
+
+//Funciones mazos
 void crearMazo();
-void mostrarMazos(bool soloLectura);
+void mostrarMazos();
 void renombrarMazo();
 void eliminarMazo();
+void repasoFlashcards();
+
+//Funciones cartas
+void menuCartas();
 void crearCarta();
 void mostrarCartas();
 void editarCarta();
 void eliminarCarta();
 
 int main() {
+	// Addmite la codificación UTF-8 (caracteres especiales, emojis y otros símbolos)
+	SetConsoleOutputCP(CP_UTF8);
+	
 	string opcion;
 	
 	// Crear el directorio  o carpeta
-	_mkdir(directorio.c_str() );
+	CreateDirectory(directorio.c_str(), NULL);
 	
 	do{
 		// Mostramos el menú de opciones del contenedor
@@ -39,6 +53,8 @@ int main() {
         cout << "2. Mostrar mazos\n";
         cout << "3. Renombrar mazo\n";
         cout << "4. Eliminar mazo\n";
+        cout << "5. Menú flashcards\n";
+        cout << "6. Repaso flashcards\n";
         cout << "0. Salir\n";
         
         // Solicitamos la opción al usuario
@@ -56,7 +72,7 @@ int main() {
 				break;
 			}
 			case '2': {
-				mostrarMazos(false);
+				mostrarMazos();
 				break;
 			}
 			case '3': {
@@ -65,6 +81,14 @@ int main() {
 			}
 			case '4': {
 				eliminarMazo();
+				break;
+			}
+			case '5': {
+				menuCartas();
+				break;
+			}
+			case '6': {
+				repasoFlashcards();
 				break;
 			}
 			case '0': {
@@ -81,6 +105,7 @@ int main() {
 		system("pause");
 		system("cls");
 	} while (opcion[0] != '0');
+	return 0;
 }
 
 void menuCartas() {
@@ -94,6 +119,7 @@ void menuCartas() {
         cout << "2. Mostrar flashcards\n";
         cout << "3. Editar flashcards\n";
         cout << "4. Eliminar flashcard\n";
+        cout << "5. Repaso flashcard\n";
         cout << "0. Salir\n";
         
         
@@ -117,6 +143,13 @@ void menuCartas() {
 			}
 			case 4: {
 				eliminarCarta();
+				break;
+			}
+			case 5: {
+				repasoFlashcards();
+				break;
+			}
+			case 0: {
 				break;
 			}
 			default: {
@@ -146,7 +179,7 @@ void crearMazo() {
 	mazo.close();
 }
 
-void mostrarMazos(bool soloLectura) {
+void mostrarMazos() {
 	// Almacena la informacion de un archivo
 	_finddata_t archivo;
 	
@@ -177,16 +210,13 @@ void mostrarMazos(bool soloLectura) {
 		} while (_findnext(verificador, &archivo) == 0);
 		_findclose(verificador);
 		
-		if (soloLectura == false) {
-			menuCartas();
-		} 	
 	} else {
 		cout << "No se encontraron mazos en el directorio" << endl;
 	}
 }
 
 void renombrarMazo() {
-	mostrarMazos(true);
+	mostrarMazos();
 	string nuevoNombre;
 	
 	fflush(stdin);
@@ -202,7 +232,7 @@ void renombrarMazo() {
 }
 
 void eliminarMazo() {
-	mostrarMazos(true);
+	mostrarMazos();
 	
 	fflush(stdin);
 	cout << "ID del mazo que desea eliminar: "; cin >> id;
@@ -217,7 +247,7 @@ void eliminarMazo() {
 void crearCarta() {
 	bool continuar;
 	
-	mostrarMazos(true);
+	mostrarMazos();
 	
 	fflush(stdin);
 	cout << "ID del mazo: "; cin >> idMazo;
@@ -232,7 +262,7 @@ void crearCarta() {
 	
 	do {
 		fflush(stdin);
-		cout << "Tema: "; getline(cin, tema);
+		cout << "\nTema: "; getline(cin, tema);
 		cout << "Contenido: "; getline(cin, contenido);
 		mazo << "t:: " << tema << endl << "c:: " << contenido << endl << endl;
 		cout << "Desea agregar más flashcards (Sí = 1) (No = 0): ";
@@ -243,7 +273,7 @@ void crearCarta() {
 }
 
 void mostrarCartas() {
-	mostrarMazos(true);
+	mostrarMazos();
 	
 	fflush(stdin);
 	cout << "ID del mazo: "; cin >> idMazo;
@@ -290,7 +320,7 @@ void editarCarta() {
 	mostrarCartas();
 	
 	fflush(stdin);
-	cout << "\nID de la flashcard que desea actualizar"; cin >> idCarta; 
+	cout << "\nID de la flashcard que desea actualizar: "; cin >> idCarta; 
 	
 	ifstream mazo;
 	mazo.open( ruta(nombresMazos[idMazo]), ios::in);
@@ -406,4 +436,134 @@ void eliminarCarta(){
 	    rename( ruta("temp.txt").c_str(), ruta(nombresMazos[idMazo]).c_str());
 	    cout << "\nFlashcard eliminada correctamente." << endl << endl;		
 	}
+}
+
+void repasoFlashcards() {
+    string rpta, linea;
+    char pntj, seguir;
+	
+	//Se crea la subcarpeta en el directorio "MAZOS"
+	CreateDirectory( rutaRepaso("").c_str(), NULL);
+	ifstream mazoRepaso2( rutaRepaso("mazoRepaso.txt" ) );
+
+	//Verificar si mazoRepaso aun tiene flashcards por repasar, o si esta vacio
+	if( mazoRepaso2.peek() == ifstream::traits_type::eof() ){
+		//Copiar flashcards de mazo a mazo Repaso
+		mostrarMazos();
+		
+		fflush(stdin);
+    	cout << "\n\nIngrese el ID del mazo: "; cin >> id;
+    	mazoRepaso2.close();
+    	
+    	//Copiar flashcards de mazo a mazo Repaso
+    	ifstream mazo ( ruta(nombresMazos[id]) );
+		ofstream mazoRepaso2 ( rutaRepaso("mazoRepaso.txt" ) );
+		
+		while ( getline(mazo, linea) ) {
+	        mazoRepaso2 << linea << endl;
+	    }
+	    mazo.close();
+	    
+	}else{
+		cout<<"\nMazo repaso tiene aun cartas por repasar..."<<endl<<endl;
+	}
+	
+	system("pause");
+    mazoRepaso2.close();
+    
+    //Bucle para recorrer
+	bool continuar = true;
+	
+	while ( continuar ){
+		id = 0;
+		
+		//Abriendo mazos para iniciar el bucle
+		ifstream mazoRepaso( rutaRepaso("mazoRepaso.txt" ) );
+		ofstream temp ( rutaRepaso("temp.txt") );
+		
+		while( getline(mazoRepaso,linea) ){
+			
+			// Verifica si la linea esta vacia y la saltea;
+			if( linea.empty() == true){
+				continue;
+			}
+			
+			// Si encuentra t:: en linea
+			if( linea.substr(0,4) == "t:: "){
+				
+				system("cls");
+	            fflush(stdin);
+				
+				tema = linea.substr(4);
+	            cout << tema << endl << endl; // Pregunta
+	            
+	            cout << "Tu respuesta--> "; getline(cin, rpta);
+				
+				// Si encuentra c:: en la linea
+				if( getline(mazoRepaso, linea) && linea.substr(0,4) == "c:: " ){
+					
+					contenido = linea.substr(4);
+	            	cout << "\nRespuesta--> " << contenido << endl << endl; // Respuesta correcta
+	            	cout << "\n\tMe falto(1) Bien(2) Excelente(3)" << endl;
+	            	
+	            	id++;
+	            	
+	            	// Puntuación
+		            do {
+		                cout << "Puntue--> ";
+		                cin >> pntj;
+		                if (pntj != '1' && pntj != '2' && pntj != '3') {
+		                    cout << " x Opcion invalida" << endl;
+		                }
+		            } while (pntj != '1' && pntj != '2' && pntj != '3');
+				    
+		            if (pntj != '3') {    
+						// Mantener la flashcard si la respuesta no fue excelente
+		                temp << endl << "t:: "<< tema << endl;
+		                temp << "c:: " << contenido << endl << endl;
+		            }else{
+		            	cout << "\n\nFlashcard completada!." << endl << endl;
+					}
+				
+				
+					do {
+				        cout << endl << "Siguiente(1) | Salir(0) --> ";
+				        cin >> seguir;
+				        if (seguir != '0' && seguir != '1') {
+				            cout << "x Invalido" << endl;
+				        }
+				    } while (seguir != '0' && seguir != '1');
+				    
+				    if (seguir == '0') {
+				    	
+				    	while ( getline(mazoRepaso, linea) ) {
+	        				temp << linea << endl;
+	    				}
+				    	
+				        continuar = false;
+				        break;
+				    }
+				}
+			}	
+		}
+		
+		//En caso de no encontrar flashcards
+		if( id == 0 ){
+			continuar = false;
+			cout<<"\nNo se encontraron cartas en el mazo..."<<endl<<endl;
+		}
+		
+		// Brinda la opción de salir del repaso
+		mazoRepaso.close();
+		temp.close();
+		
+		//Conviertiendo temp al nuevo mazo
+		remove( rutaRepaso("mazoRepaso.txt").c_str());
+		rename( rutaRepaso("temp.txt").c_str(), rutaRepaso("mazoRepaso.txt").c_str());
+		
+		system("pause");
+		system("cls");
+    }
+    
+    cout << "\t\tVale. Hemos terminado el repaso :)" << endl<<endl;
 }
