@@ -1,23 +1,21 @@
-#include <iostream>
 #include <cstdlib>  
-#include <conio.h>  
-#include <windows.h>
+#include <conio.h>
 
 using namespace std;
 
+short i, j, n, id;
+extern short i, j, n, id;
 
-void gotoxy(int x, int y) {
-    COORD coord;
-    coord.X = x;
-    coord.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-}
+// Declaración de la función
+#include "Modulos ASPE/GestorDeTareas.h"
+#include "Modulos ASPE/SistemaDeFlashcards.h"
+#include "Modulos ASPE/PonderadoNotas.h"
 
 void mostrarMenu() {
     system("cls");  
     
     // Centrar el menú
-    int menuX = 35; // Ajustar según el ancho de la consola
+    int menuX = 40; // Ajustar según el ancho de la consola
     int menuY = 5;  // Ajustar según la altura de la consola
 
     gotoxy(menuX, menuY); cout << "ASPE";
@@ -32,7 +30,7 @@ void mostrarMenu() {
 
 int main() {
     // Centrar el mensaje de bienvenida
-    int welcomeX = 30; // Ajustar según el ancho de la consola
+    int welcomeX = 25; // Ajustar según el ancho de la consola
     int welcomeY = 10; // Ajustar según la altura de la consola
 
     gotoxy(welcomeX, welcomeY); cout << "ASPE";
@@ -42,13 +40,27 @@ int main() {
     gotoxy(welcomeX, welcomeY + 3); cout << "Presione cualquier tecla para continuar...";
     _getch();  
     
+    char opcion;
     
-    mostrarMenu();
+    do{
+    	mostrarMenu();
+    	
+		gotoxy(40, 15); // Ajustar la posición del cursor para la entrada
+    	cout<<"Opcion ---> "; cin >> opcion;
+    	
+    	system("cls");
+    	
+    	switch(opcion){
+    		case '1': GestorDeTareas(); break;
+    		case '2': SistemaDeFlashcards(); break;
+    		case '3': PonderadoNotas(); break;
+    		case '0': cout<< "Saliendo.... \n\nGracias por utilizar ASPE!"<<endl; break;
+    		default: cout<<"Opcion invalida o aun no disponible "; getch();
+		}
+    	
+	}while(opcion != '0');
+	
     
-    
-    int opcion;
-    gotoxy(35, 15); // Ajustar la posición del cursor para la entrada
-    cin >> opcion;
     
     return 0;
 }
