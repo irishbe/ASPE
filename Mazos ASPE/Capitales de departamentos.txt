@@ -1,0 +1,84 @@
+t:: Amazonas
+c:: Chachapoyas
+
+t:: Ancash
+c:: Huaraz
+
+t:: Apurimac
+c:: Abancay
+
+t:: Arequipa
+c:: Arequipa
+
+t:: Arequipa
+c:: Arequipa
+
+t:: Arequipa
+c:: Arequipa
+
+t:: Arequipa
+c:: Arequipa
+
+t:: Ayacucho
+c:: Ayacucho
+
+t:: Cajamarca
+c:: Cajamarca
+
+t:: Callao
+c:: Callao
+
+t:: Cusco
+c:: Cusco
+
+t:: Huancavelica
+c:: Huancavelica
+
+t:: Huanuco
+c:: Huanuco
+
+t:: Ica
+c:: Ica
+
+t:: Junin
+c:: Huancayo
+
+t:: La Libertad
+c:: Trujillo
+
+t:: Lambayeque
+c:: Chiclayo
+
+t:: Lima
+c:: Lima
+
+t:: Loreto
+c:: Iquitos
+
+t:: Madre de Dios
+c:: Puerto Maldonado
+
+t:: Moquegua
+c:: Moquegua
+
+t:: Pasco
+c:: Cerro de Pasco
+
+t:: Piura
+c:: Piura
+
+t:: Puno
+c:: Puno
+
+t:: San Martin
+c:: Moyobamba
+
+t:: Tacna
+c:: Tacna
+
+t:: Tumbes
+c:: Tumbes
+
+t:: Ucayali
+c:: Pucallpa
+
