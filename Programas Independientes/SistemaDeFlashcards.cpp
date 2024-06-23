@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <windows.h>
+#include "colores.h"
 
 using namespace std;
 
@@ -46,7 +47,7 @@ int main() {
 	
 	do{
 		// Mostramos el menú de opciones del contenedor
-		cout << "\n\n\tSISTEMA DE FLASHCARDS";
+		colorTexto("\n\n\tSISTEMA DE FLASHCARDS", blancoBrillante);
         cout << "\n\n\t1. Crear mazo";
         cout << "\n\t2. Mostrar mazos";
         cout << "\n\t3. Renombrar mazo";
@@ -94,7 +95,7 @@ int main() {
 				break;
 			}
 			default: {
-				cout << "\n\tOpción no válida. Por favor, seleccione una opción válida.\n\n";
+				colorTextoFondo("\n\tOpción no válida. Por favor, seleccione una opción válida.\n\n", blancoBrillante, rojo);
 				break;
 			}
 		}
@@ -109,7 +110,7 @@ void menuCartas() {
 	
 	do{
 		// Mostramos el menú de opciones del contenedor
-		cout << "\n\n\tMENÚ DE FLASHCARDS";
+		colorTexto("\n\n\tMENÚ DE FLASHCARDS", blancoBrillante);
         cout << "\n\n\t1. Crear flashcards";
         cout << "\n\t2. Mostrar flashcards";
         cout << "\n\t3. Editar flashcards";
@@ -149,7 +150,7 @@ void menuCartas() {
 				break;
 			}
 			default: {
-				cout << "\n\tOpción no válida. Por favor, seleccione una opción válida.\n\n";
+				colorTextoFondo("\n\tOpción no válida. Por favor, seleccione una opción válida.\n\n", blancoBrillante, rojo);
 				break;
 			}
 		}
@@ -169,10 +170,9 @@ void crearMazo() {
 	mazo.open(ruta(nombreMazo + ".txt"), ios::out);
 	
 	if(mazo.fail()) {
-		cout << "\n\tNo se pudo crear el mazo\n\n";
+		colorTextoFondo("\n\tNo se pudo crear el mazo\n\n", blancoBrillante, rojo);
 	} else {
-		cout << "\n\t¡Mazo creado correctamente!\n\n";
-		//cout << "\n\t¡Mazo creado correctamente!\n\n";
+		colorTextoFondo("\n\t¡Mazo creado correctamente!\n\n", blancoBrillante, verde);
 	}
 	
 	mazo.close();
@@ -211,7 +211,7 @@ void mostrarMazos() {
 		_findclose(verificador);
 		cout << "\n";
 	} else {
-		cout << "\n\tNo se encontraron mazos en el directorio\n\n";
+		colorTextoFondo("\n\tNo se encontraron mazos en el directorio\n\n", blancoBrillante, rojo);
 	}
 }
 
@@ -225,9 +225,9 @@ void renombrarMazo() {
 	cout << "\n\tNuevo nombre del mazo: "; getline(cin, nuevoNombre);
 	
 	if (rename (ruta(nombresMazos[id]).c_str(), ruta(nuevoNombre + ".txt").c_str() ) != 0) {
-        cout << "\n\tError al renombrar el mazo.\n\n";
+        colorTextoFondo("\n\tError al renombrar el mazo.\n\n", blancoBrillante, rojo);
     } else {
-    	cout << "\n\t¡El nombre del mazo se ha cambiado correctamente!\n\n";
+    	colorTextoFondo("\n\t¡El nombre del mazo se ha cambiado correctamente!\n\n", blancoBrillante, verde);
 	}
 }
 
@@ -238,9 +238,9 @@ void eliminarMazo() {
 	cout << "\tID del mazo que desea eliminar: "; cin >> id;
 	
 	if (remove( ruta(nombresMazos[id]).c_str() ) != 0) {
-        cout << "\n\tError al eliminar el mazo.\n\n";
+        colorTextoFondo("\n\tError al eliminar el mazo.\n\n", blancoBrillante, rojo);
     } else {
-    	cout << "\n\t¡El mazo se ha eliminado correctamente!\n\n";
+    	colorTextoFondo("\n\t¡El mazo se ha eliminado correctamente!\n\n", blancoBrillante, verde);
 	}
 }
 
@@ -255,7 +255,7 @@ void crearCarta() {
 	ofstream mazo;
 	mazo.open( ruta(nombresMazos[idMazo]), ios::app ); // ios::app permite añadir o adjuntar contenido al archivo
 	if(mazo.fail()){
-		cout<<"\n\tNo se pudo abrir el mazo\n\n";
+		colorTextoFondo("\n\tNo se pudo abrir el mazo\n\n", blancoBrillante, rojo);
 		return;
 	}
 	
@@ -311,7 +311,7 @@ void mostrarCartas() {
 	
 	//En caso de no encontrar flashcards
 	if( id == 0 ){
-		cout << "\tNo se encontraron cartas en el mazo...\n\n";
+		colorTextoFondo("\tNo se encontraron cartas en el mazo...\n\n", blancoBrillante, rojo);
 	}
 	
 	mazo.close();
@@ -324,7 +324,7 @@ void editarCarta() {
 	ifstream mazoPrueba;
 	mazoPrueba.open( ruta(nombresMazos[idMazo]), ios::in);
 	if(mazoPrueba.fail()){
-		cout<<"\n\tNo se pudo abrir el mazo\n\n";
+		colorTextoFondo("\n\tNo se pudo abrir el mazo\n\n", blancoBrillante, rojo);
 		return;
 	}
     
@@ -350,7 +350,7 @@ void editarCarta() {
 	ifstream mazo;
 	mazo.open( ruta(nombresMazos[idMazo]), ios::in);
 	if(mazo.fail()){
-		cout<<"\n\tNo se pudo abrir el mazo\n\n";
+		colorTextoFondo("\n\tNo se pudo abrir el mazo\n\n", blancoBrillante, rojo);
 		return;
 	}
 	
@@ -406,11 +406,11 @@ void editarCarta() {
 	
 	//En caso de no encontrar flashcards
 	if( id == 0 ){
-		cout<<"\n\tNo se encontraron cartas en el mazo...\n\n";
+		colorTextoFondo("\n\tNo se encontraron cartas en el mazo...\n\n", blancoBrillante, rojo);
 	}else{
 		//Conviertiendo temp al nuevo mazo
 	    rename( ruta("temp.txt").c_str(), ruta(nombresMazos[idMazo]).c_str());
-	    cout << "\n\tFlashcard actualizada correctamente.\n\n";		
+	    colorTextoFondo("\n\tFlashcard actualizada correctamente.\n\n", blancoBrillante, verde);	
 	}
 }
 
@@ -487,16 +487,17 @@ void eliminarCarta(){
 	
 	//En caso de no encontrar flashcards
 	if( id == 0 ){
-		cout<<"\n\tNo se encontraron cartas en el mazo...\n\n";
+		colorTextoFondo("\n\tNo se encontraron cartas en el mazo...\n\n", blancoBrillante, rojo);
 	}else{
 		//Conviertiendo temp al nuevo mazo
 	    rename( ruta("temp.txt").c_str(), ruta(nombresMazos[idMazo]).c_str());
-	    cout << "\n\tFlashcard eliminada correctamente.\n\n";		
+	    colorTextoFondo("\n\tFlashcard eliminada correctamente.\n\n", blancoBrillante, verde);	
 	}
 }
 
 void repasoFlashcards() {
-    string rpta, linea;
+    
+	string rpta, linea;
     char pntj, seguir;
 	
 	//Se crea la subcarpeta en el directorio "MAZOS"
@@ -507,13 +508,36 @@ void repasoFlashcards() {
 	if( mazoRepaso2.peek() == ifstream::traits_type::eof() ){
 		//Copiar flashcards de mazo a mazo Repaso
 		mostrarMazos();
-		
 		fflush(stdin);
-    	cout << "\tIngrese el ID del mazo: "; cin >> id;
+    	cout << "\tIngrese el ID del mazo: "; cin >> idMazo;
     	mazoRepaso2.close();
     	
+		// Comprobar si hay flashcards en el mazo
+		ifstream mazoPrueba;
+		mazoPrueba.open( ruta(nombresMazos[idMazo]), ios::in);
+		if(mazoPrueba.fail()){
+			colorTextoFondo("\n\tNo se pudo abrir el mazo\n\n", blancoBrillante, rojo);
+			return;
+		}
+	    
+		string lineaPrueba;
+		bool sinFlashcards = false;
+	    
+		while (getline(mazoPrueba, lineaPrueba)) {
+			if (!lineaPrueba.empty() && lineaPrueba.substr(0, 4) == "t:: ") {
+				sinFlashcards = true;
+				break;
+	        }
+	    }
+		mazoPrueba.close();
+	
+		if (!sinFlashcards) {
+			colorTextoFondo("\n\tNo se encontraron flashcards en el mazo\n\n", blancoBrillante, rojo);
+			return;  // Salir de la función si no se encuentran flashcards
+		}
+    	
     	//Copiar flashcards de mazo a mazo Repaso
-    	ifstream mazo ( ruta(nombresMazos[id]) );
+    	ifstream mazo ( ruta(nombresMazos[idMazo]) );
 		ofstream mazoRepaso2 ( rutaRepaso("mazoRepaso.txt" ) );
 		
 		while ( getline(mazo, linea) ) {
@@ -522,7 +546,7 @@ void repasoFlashcards() {
 	    mazo.close();
 	    
 	}else{
-		cout<<"\n\tMazo repaso tiene aun cartas por repasar...\n\n";
+		cout << "\n\tMazo repaso tiene aun cartas por repasar...\n\n";
 	}
 	
 	system("pause");
@@ -552,25 +576,25 @@ void repasoFlashcards() {
 	            fflush(stdin);
 				
 				tema = linea.substr(4);
-	            cout << tema << endl << endl; // Pregunta
+	            cout << "\n\t";
+	            colorTexto(tema, blancoBrillante); // Pregunta
 	            
-	            cout << "\tTu respuesta--> "; getline(cin, rpta);
+	            cout << "\n\n\tTu respuesta:\t"; getline(cin, rpta);
 				
 				// Si encuentra c:: en la linea
 				if( getline(mazoRepaso, linea) && linea.substr(0,4) == "c:: " ){
 					
 					contenido = linea.substr(4);
-	            	cout << "\n\tRespuesta--> " << contenido << endl << endl; // Respuesta correcta
-	            	cout << "\n\tMe falto(1) Bien(2) Excelente(3)" << endl;
-	            	
+	            	cout << "\n\tRespuesta:\t" << contenido; // Respuesta correcta
 	            	id++;
 	            	
 	            	// Puntuación
 		            do {
-		                cout << "\tPuntue--> ";
+		            	cout << "\n\n\tMe faltó(1) Bien(2) Excelente(3)\n";
+		                cout << "\n\tPuntaje:\t";
 		                cin >> pntj;
 		                if (pntj != '1' && pntj != '2' && pntj != '3') {
-		                    cout << " x Opcion invalida" << endl;
+		                    colorTextoFondo("\n\tOpción inválida\n", blancoBrillante, rojo);
 		                }
 		            } while (pntj != '1' && pntj != '2' && pntj != '3');
 				    
@@ -579,15 +603,16 @@ void repasoFlashcards() {
 		                temp << endl << "t:: "<< tema << endl;
 		                temp << "c:: " << contenido << endl << endl;
 		            }else{
-		            	cout << "\n\n\tFlashcard completada!.\n\n";
+		            	system("cls");
+		            	colorTextoFondo("\n\n\t¡Flashcard completada!", blancoBrillante, verde);
 					}
 				
 				
 					do {
-				        cout << endl << "\tSiguiente(1) | Salir(0) --> ";
+				        cout << "\n\n\tSiguiente(1) | Salir(0):\t";
 				        cin >> seguir;
 				        if (seguir != '0' && seguir != '1') {
-				            cout << "\tx Invalido" << endl;
+				            colorTextoFondo("\n\tOpción inválida\n", blancoBrillante, rojo);
 				        }
 				    } while (seguir != '0' && seguir != '1');
 				    
@@ -607,7 +632,7 @@ void repasoFlashcards() {
 		//En caso de no encontrar flashcards
 		if( id == 0 ){
 			continuar = false;
-			cout<<"\n\tNo se encontraron cartas en el mazo...\n\n";
+			colorTextoFondo("\n\tNo se encontraron cartas en el mazo...\n\n", blancoBrillante, rojo);
 		}
 		
 		// Brinda la opción de salir del repaso
@@ -622,5 +647,5 @@ void repasoFlashcards() {
 		system("cls");
     }
     
-    cout << "\n\tVale. Hemos terminado el repaso :)\n\n";
+    colorTextoFondo("\n\tVale. Hemos terminado el repaso :D\n\n", blancoBrillante, verde);
 }
