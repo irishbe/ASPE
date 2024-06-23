@@ -10,8 +10,9 @@ extern short i, j, n, id;
 #include "Modulos ASPE/GestorDeTareas.h"
 #include "Modulos ASPE/SistemaDeFlashcards.h"
 #include "Modulos ASPE/PonderadoNotas.h"
+#include "Modulos ASPE/herramientas.h"
 
-void mostrarMenu() {
+void mostrarMenu(int opcion) {
     system("cls");  
     
     // Centrar el menú
@@ -20,12 +21,12 @@ void mostrarMenu() {
 
     gotoxy(menuX, menuY); cout << "ASPE";
     gotoxy(menuX, menuY + 1); cout << "Usuario: [Nombre]";
-    gotoxy(menuX, menuY + 3); cout << "1. Gestor de tareas pendientes";
-    gotoxy(menuX, menuY + 4); cout << "2. Administrador de flashcards";
-    gotoxy(menuX, menuY + 5); cout << "3. Registro de calificaciones";
-    gotoxy(menuX, menuY + 6); cout << "4. Terminar periodo academico";
-    gotoxy(menuX, menuY + 7); cout << "5. Renombrar periodo academico";
-    gotoxy(menuX, menuY + 8); cout << "0. SALIR";
+    gotoxy(menuX, menuY + 3); cout << (opcion == 1 ? "-> " : "   ") << "1. Gestor de tareas pendientes";
+    gotoxy(menuX, menuY + 4); cout << (opcion == 2 ? "-> " : "   ") << "2. Administrador de flashcards";
+    gotoxy(menuX, menuY + 5); cout << (opcion == 3 ? "-> " : "   ") << "3. Registro de calificaciones";
+    gotoxy(menuX, menuY + 6); cout << (opcion == 4 ? "-> " : "   ") << "4. Terminar periodo academico";
+    gotoxy(menuX, menuY + 7); cout << (opcion == 5 ? "-> " : "   ") << "5. Renombrar periodo academico";
+    gotoxy(menuX, menuY + 8); cout << (opcion == 0 ? "-> " : "   ") << "0. SALIR";
 }
 
 int main() {
@@ -40,27 +41,29 @@ int main() {
     gotoxy(welcomeX, welcomeY + 3); cout << "Presione cualquier tecla para continuar...";
     _getch();  
     
-    char opcion;
+    int opcion = 1;
+    char tecla;
     
     do{
-    	mostrarMenu();
     	
-		gotoxy(40, 15); // Ajustar la posición del cursor para la entrada
-    	cout<<"Opcion ---> "; cin >> opcion;
-    	
-    	system("cls");
-    	
+    	do{
+    		mostrarMenu(opcion);
+    		ocultarCursor();
+    		seleccionarOpciones(opcion, tecla);
+		}while(tecla != 13);
+		
+		system("cls");
+		
+		mostrarCursor();
     	switch(opcion){
-    		case '1': GestorDeTareas(); break;
-    		case '2': SistemaDeFlashcards(); break;
-    		case '3': PonderadoNotas(); break;
-    		case '0': cout<< "Saliendo.... \n\nGracias por utilizar ASPE!"<<endl; break;
+    		case 1: GestorDeTareas(); break;
+    		case 2: SistemaDeFlashcards(); break;
+    		case 3: PonderadoNotas(); break;
+    		case 0: cout<< "Saliendo.... \n\nGracias por utilizar ASPE!"<<endl; break;
     		default: cout<<"Opcion invalida o aun no disponible "; getch();
 		}
     	
-	}while(opcion != '0');
-	
-    
+	}while(opcion != 0);
     
     return 0;
 }
