@@ -53,10 +53,11 @@ int opcionSeleccionada(string textoOpciones[], string titulo, int numeroOpciones
 	
 	do{
 		//Mostrando el titulo
-		colorTexto(titulo, blancoBrillante);
+		cout << "\n\n\t"; colorTexto(titulo, blancoBrillante); cout << "\n";
 		
 		//Mostrando opciones del menu
 		for(int i=0; i < numeroOpciones; i++){
+			cout << "\n\t";
 			if(opcionSeleccionada == i){
 				colorTextoFondo(textoOpciones[i], blancoBrillante, aguamarina);
 			}else{
@@ -71,9 +72,8 @@ int opcionSeleccionada(string textoOpciones[], string titulo, int numeroOpciones
 		}else if(tecla == 80){
 			opcionSeleccionada = (opcionSeleccionada + 1) % numeroOpciones;
 		}else if(tecla == 27){
-			opcionSeleccionada = numeroOpciones-1; break;
+			opcionSeleccionada = numeroOpciones-1; system("cls"); break;
 		}
-
 		system("cls");
 	}while(tecla != 13);
 	
