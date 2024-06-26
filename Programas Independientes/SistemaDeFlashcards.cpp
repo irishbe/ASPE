@@ -1,29 +1,40 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <windows.h>
 #include "herramientas.h"
+#include <windows.h>
 
 using namespace std;
 
 // Nombre del directorio o carpeta para almacenar los mazos
 const string directorio = "Mazos ASPE";
 const string dirRepaso = "Repaso";
-const string dirEstadistica = "Estadistica Flashcards";
+const string dirRegistro = "Registro Flashcards";
 
 //Variables globales
-int n = 0, i, id, idMazo, idCarta;
+int nMazos = 0, i, id, idMazo, idCarta;
 string tema, contenido, *nombresMazos = nullptr;
+
+//Estructura de las estadísticas
+struct registroFlashcards{
+	int mazosCreados = 0,
+		mazosEliminados = 0,
+		repasosTotales = 0,
+		repasosCancelados = 0,
+		puntuacion1 = 0,
+		puntuacion2 = 0,
+		puntuacion3 = 0;
+}rF;
 
 //Funciones para generar rutas
 string ruta(string nombreArchivo) {
-    return (directorio + "/" + nombreArchivo);
+	return (directorio + "\\" + nombreArchivo);
 }
 string rutaRepaso(string nombreArchivo) {
-    return (directorio + "/" + dirRepaso + "/" + nombreArchivo);
+	return (directorio + "\\" + dirRepaso + "\\" + nombreArchivo);
 }
-string rutaEstadistica(string nombreArchivo) {
-    return (directorio + "/" + dirEstadistica + "/" + nombreArchivo);
+string rutaRegistro(string nombreArchivo) {
+	return directorio + "\\" + dirRegistro + "\\" + nombreArchivo;
 }
 
 //Funciones de utilidad
@@ -35,16 +46,67 @@ void verificarMazos() {
 	intptr_t verificador = _findfirst( (directorio + "//" + "*.txt").c_str() , &archivo);
 	
 	// Verifica si la busqueda fue exitosa
-	n=0;
+	nMazos=0;
 	if (verificador != -1) {
 		//Hallar la cantidad de mazos
 		do {
-			n++;	
+			nMazos++;	
 		} while (_findnext(verificador, &archivo) == 0);
 		_findclose(verificador);
 	} else {
 		colorTextoFondo("\n\tNo se encontraron mazos en el directorio\n\n", blancoBrillante, rojo);
 	}
+}
+// Función para verificar y crear el archivo de registro si no existe
+void verificarRegistro() {
+	string archivoRegistro = rutaRegistro("Registro Sistema de Flashcards.dat");
+
+	// Verificar si el archivo existe
+	ifstream archivo(archivoRegistro, ios::binary);
+	if (!archivo.is_open()) {
+		
+		// Intentar crear el archivo
+		ofstream nuevoArchivo(archivoRegistro, ios::binary);
+		if (!nuevoArchivo.is_open()) {
+			colorTextoFondo("\n\tNo se pudo crear el archivo de registro...\n\n", blancoBrillante, rojo);
+			return;
+		}
+
+		// Inicializar con datos predeterminados
+		rF = {0, 0, 0, 0, 0, 0, 0};
+		nuevoArchivo.write(reinterpret_cast<const char*>(&rF), sizeof(rF));
+		nuevoArchivo.close();
+	} else {
+		// Leer los datos del archivo si ya existe
+		archivo.read(reinterpret_cast<char*>(&rF), sizeof(rF));
+		archivo.close();
+	}
+	archivo.close();
+}
+// Función para actualizar el archivo de registro
+void actualizarRegistro(int valor, int campo) {
+	verificarRegistro();
+
+	switch (campo) {
+		case 1: rF.mazosCreados += valor; break;
+		case 2: rF.mazosEliminados += valor; break;
+		case 3: rF.repasosTotales += valor; break;
+		case 4: rF.repasosCancelados += valor; break;
+		case 5: rF.puntuacion1 += valor; break;
+		case 6: rF.puntuacion2 += valor; break;
+		case 7: rF.puntuacion3 += valor; break;
+		default: cout<<"Campo inválido";
+    }
+    
+	// Guardar los cambios en el archivo
+	ofstream registroOut(rutaRegistro("Registro Sistema de Flashcards.dat"), ios::binary);
+	if (!registroOut.is_open()) {
+		colorTextoFondo("\n\tNo se pudo abrir el archivo de registro para escritura...", blancoBrillante, rojo); cout << "\n\n";
+		return;
+	}
+
+	registroOut.write(reinterpret_cast<const char*>(&rF), sizeof(rF));
+	registroOut.close();
 }
 
 //Funciones mazos
@@ -53,7 +115,7 @@ void mostrarMazos();
 void renombrarMazo();
 void eliminarMazo();
 void repasoFlashcards();
-void estadisticaFlashcards();
+void registroFlashcards();
 
 //Funciones cartas
 void menuCartas();
@@ -62,12 +124,24 @@ void mostrarCartas();
 void editarCarta();
 void eliminarCarta();
 
+// Menú de opciones
 int main() {
 	// Addmite la codificación UTF-8 (caracteres especiales)
 	SetConsoleOutputCP(CP_UTF8);
 	
-	// Crear el directorio  o carpeta
+	// Crear el directorio o carpeta principal
 	CreateDirectory(directorio.c_str(), NULL);
+
+	// Crear la subcarpeta para el registro de datos dentro del directorio principal
+	string directorioCompleto = directorio + "\\" + dirRegistro;
+	if (!CreateDirectoryA(directorioCompleto.c_str(), NULL)) {
+		if (GetLastError() != ERROR_ALREADY_EXISTS) {
+			colorTextoFondo("\n\tNo se pudo crear el directorio de registro...", blancoBrillante, rojo); cout << "\n\n";
+		}
+	}
+	
+	// Verificar el registro para su uso en las diferentes funciones
+	verificarRegistro();
 	
 	int opcion;
 	
@@ -79,7 +153,7 @@ int main() {
 		"4. Eliminar mazo",
 		"5. Menú de flashcards",
 		"6. Repaso de flashcards",
-		"7. Estadísticas del Sistema de Flashcards",
+		"7. Registro histórico",
 		"\n\tESC. Volver al menú principal ASPE"
 	};
 	
@@ -112,13 +186,16 @@ int main() {
 			}
 			case 6: {
 				verificarMazos();
-				if (n>0){
+				if (nMazos>0){
 					repasoFlashcards();
 				}
 				break;
 			}
 			case 7: {
-				estadisticaFlashcards();
+				verificarMazos();
+				if (nMazos>0){
+					registroFlashcards();
+				}
 				break;
 			}
 			case 0: {
@@ -138,7 +215,7 @@ int main() {
 
 void menuCartas() {
 	verificarMazos();
-	if (n>0){
+	if (nMazos>0){
 		int opcion;
 		
 		string tituloMazos = "MENÚ DE FLASHCARDS";
@@ -193,6 +270,7 @@ void menuCartas() {
 	}
 }
 
+// Funciones CRUD mazos
 void crearMazo() {
 	string nombreMazo;
 	ofstream mazo;
@@ -207,6 +285,7 @@ void crearMazo() {
 		colorTextoFondo("\n\tNo se pudo crear el mazo\n\n", blancoBrillante, rojo);
 	} else {
 		colorTextoFondo("\n\t¡Mazo creado correctamente!\n\n", blancoBrillante, verde);
+		actualizarRegistro(1,1);
 	}
 	
 	mazo.close();
@@ -220,17 +299,17 @@ void mostrarMazos() {
 	intptr_t verificador = _findfirst( (directorio + "//" + "*.txt").c_str() , &archivo);
 	
 	// Verifica si la busqueda fue exitosa
-	n=0;
+	nMazos=0;
 	if (verificador != -1) {
 		//Hallar la cantidad de mazos
 		do {
-			n++;	
+			nMazos++;	
 		} while (_findnext(verificador, &archivo) == 0);
 		
 		_findclose(verificador);
 		
 		// Define el vector global nombresMazos
-		nombresMazos = new string [n];
+		nombresMazos = new string [nMazos];
 		// Almacena en el vector los nombres de los mazos y los muestra
 		verificador = _findfirst( (directorio + "//" + "*.txt").c_str() , &archivo);
 		
@@ -252,15 +331,15 @@ void renombrarMazo() {
 	mostrarMazos();
 	
 	// Verificar que hayan mazos
-	if (n>0){
+	if (nMazos>0){
 		do{
 			cin.clear();
 			fflush(stdin);	
 			cout << "\tID del mazo donde desea mostrar las flashcards: "; cin >> id;
-			if( id > n - 1 || id < 0 || cin.fail() ){
+			if( id > nMazos - 1 || id < 0 || cin.fail() ){
 				colorTextoFondo("\n\tID inválido\n\n", blancoBrillante, rojo);
 			}
-		}while( id > n - 1 || id < 0 || cin.fail() );
+		}while( id > nMazos - 1 || id < 0 || cin.fail() );
 		
 		string nuevoNombre;
 		// Verificar la entrada correcta del ID
@@ -268,10 +347,10 @@ void renombrarMazo() {
 			cin.clear();
 			fflush(stdin);	
 			cout << "\tID del mazo que desea renombrar: "; cin >> id;
-			if( id > n - 1 || id < 0 || cin.fail() ){
+			if( id > nMazos - 1 || id < 0 || cin.fail() ){
 				colorTextoFondo("\n\tID inválido\n\n", blancoBrillante, rojo);
 			}
-		}while( id > n - 1 || id < 0 || cin.fail() );
+		}while( id > nMazos - 1 || id < 0 || cin.fail() );
 		
 		fflush(stdin);
 		cout << "\n\tNuevo nombre del mazo: "; getline(cin, nuevoNombre);
@@ -288,26 +367,28 @@ void eliminarMazo() {
 	mostrarMazos();
 	
 	// Verificar que hayan mazos
-	if (n>0){
+	if (nMazos>0){
 		// Verificar la entrada correcta del ID
 		do{
 			cin.clear();
 			fflush(stdin);	
 			cout << "\tID del mazo que desea eliminar: "; cin >> id;
-			if( id > n - 1 || id < 0 || cin.fail() ){
+			if( id > nMazos - 1 || id < 0 || cin.fail() ){
 				colorTextoFondo("\n\tID inválido\n\n", blancoBrillante, rojo);
 			}
-		}while( id > n - 1 || id < 0 || cin.fail() );
+		}while( id > nMazos - 1 || id < 0 || cin.fail() );
 		
 		
 		if (remove( ruta(nombresMazos[id]).c_str() ) != 0) {
 	        colorTextoFondo("\n\tError al eliminar el mazo.\n\n", blancoBrillante, rojo);
 	    } else {
 	    	colorTextoFondo("\n\t¡El mazo se ha eliminado correctamente!\n\n", blancoBrillante, verde);
+	    	actualizarRegistro(1,2);
 		}
 	}
 }
 
+// Funciones CRUD cartas
 void crearCarta() {
 	bool continuar;
 	
@@ -318,10 +399,10 @@ void crearCarta() {
 		cin.clear();
 		fflush(stdin);	
 		cout << "\tID del mazo donde desea crear las flashcards: "; cin >> id;
-		if( id > n - 1 || id < 0 || cin.fail() ){
+		if( id > nMazos - 1 || id < 0 || cin.fail() ){
 			colorTextoFondo("\n\tID inválido\n\n", blancoBrillante, rojo);
 		}
-	}while( id > n - 1 || id < 0 || cin.fail() );
+	}while( id > nMazos - 1 || id < 0 || cin.fail() );
 	
 	ofstream mazo;
 	mazo.open( ruta(nombresMazos[idMazo]), ios::app ); // ios::app permite añadir o adjuntar contenido al archivo
@@ -351,10 +432,10 @@ void mostrarCartas() {
 		cin.clear();
 		fflush(stdin);	
 		cout << "\tID del mazo donde desea mostrar las flashcards: "; cin >> id;
-		if( id > n - 1 || id < 0 || cin.fail() ){
+		if( id > nMazos - 1 || id < 0 || cin.fail() ){
 			colorTextoFondo("\n\tID inválido\n\n", blancoBrillante, rojo);
 		}
-	}while( id > n - 1 || id < 0 || cin.fail() );
+	}while( id > nMazos - 1 || id < 0 || cin.fail() );
 	
 	ifstream mazo;
 	mazo.open( ruta(nombresMazos[idMazo]), ios::in );
@@ -585,7 +666,7 @@ void repasoFlashcards() {
 	ifstream verificar( rutaRepaso("mazoRepaso.txt") );
 	if(verificar.peek() != ifstream::traits_type::eof()){
 		verificar.close();
-		cout << "\n\tSu mazo tiene aún cartas por repasar...\n";
+		cout << "\n\t¡Su mazo tiene aún cartas por repasar!";
 		cout << "\n\tDesea cancelar el repaso anterior (Esto descartará las flashcards que aún necesitan repaso)";
 	    
 		int confirmacion;
@@ -602,9 +683,10 @@ void repasoFlashcards() {
 		
 		if (confirmacion == 1){
 			if (remove(rutaRepaso("mazoRepaso.txt").c_str()) == 0) {
-				cout << "\n\n\tEl archivo mazoRepaso.txt se ha eliminado correctamente.\n\n";
+				colorTextoFondo("n\n\tEl archivo mazoRepaso.txt se ha eliminado correctamente.\n\n", blancoBrillante, verde);
+				actualizarRegistro(1,4);
 			} else {
-				cout << "\n\n\tNo se pudo eliminar el archivo mazoRepaso.txt.\n\n";
+				colorTextoFondo("\n\n\tNo se pudo eliminar el archivo mazoRepaso.txt.\n\n", blancoBrillante, rojo);
 				return;
 			}
 		} else {
@@ -621,10 +703,10 @@ void repasoFlashcards() {
 			cin.clear();
 			fflush(stdin);	
 			cout << "\tID del mazo que desea repasar: "; cin >> id;
-			if( id > n - 1 || id < 0 || cin.fail() ){
+			if( id > nMazos - 1 || id < 0 || cin.fail() ){
 				colorTextoFondo("\n\tID inválido\n\n", blancoBrillante, rojo);
 			}
-		}while( id > n - 1 || id < 0 || cin.fail() );
+		}while( id > nMazos - 1 || id < 0 || cin.fail() );
     	
 		// Comprobar si hay flashcards en el mazo
 		ifstream mazoPrueba;
@@ -657,6 +739,7 @@ void repasoFlashcards() {
 		while ( getline(mazo, linea) ) {
 	        mazoRepaso2 << linea << endl;
 	    }
+	    actualizarRegistro(1,3);
 	    mazo.close();   
 	} else {
 		//cout << "\n\tSu mazo tiene aún cartas por repasar...\n";
@@ -715,9 +798,15 @@ void repasoFlashcards() {
 						// Mantener la flashcard si la respuesta no fue excelente
 		                temp << endl << "t:: "<< tema << endl;
 		                temp << "c:: " << contenido << endl << endl;
+		                if (puntaje=='1'){
+		                	actualizarRegistro(1,5);
+						} else {
+							actualizarRegistro(1,6);
+						}
 		            }else{
 		            	system("cls");
 		            	colorTextoFondo("\n\n\t¡Flashcard completada!", blancoBrillante, verde);
+		            	actualizarRegistro(1,7);
 					}
 				
 					do {
@@ -761,19 +850,18 @@ void repasoFlashcards() {
     colorTextoFondo("\n\tVale. Hemos terminado el repaso :D\n\n", blancoBrillante, verde);
 }
 
-void estadisticaFlashcards() {
-	/*rutaEstadistica("Estadistica Sistema de Flashcards");
-	
-	cout << "ANÁLISIS DE MAZOS";
-	cout << "Mazos creados: ";
-	cout << "Mazos creados:			(n)									100%";
-	cout << "Repasos completados:	(repasoTotal - repasoCancelado)		(rT-rC)/rT %";
-	cout << "Repasos cancelados:	(repasoCancelado)					     rC/rT %";
-	
-	cout << "ANÁLISIS DE FLASHCARDS";
-	cout << "Repasos totales		RT=P1+P2+P3		100% - Borrar";
-	cout << "Puntuación 1			123				P1/RT";
-	cout << "Puntuación 2			123				P2/RT";
-	cout << "Puntuación 3			123				P3/RT";
-	cout << "";*/
+void registroFlashcards() {
+	verificarRegistro();
+	cout << "\n\n\tREGISTRO HISTÓRICO DEL SISTEMA DE FLASHCARDS";
+	cout << "\n\n\tMazos actuales:\t\t"; cout << nMazos;
+	cout << "\n\tMazos creados:\t\t"; cout << rF.mazosCreados;
+	cout << "\n\tMazos eliminados:\t"; cout << rF.mazosEliminados;
+	cout << "\n\n\tRepasos totales:\t"; cout << rF.repasosTotales;
+	cout << "\n\tRepasos completados:\t"; cout << rF.repasosTotales - rF.repasosCancelados;
+	cout << "\n\tRepasos cancelados:\t"; cout << rF.repasosCancelados;
+	cout << "\n\n\tFlashcards repasadas:\t"; cout << rF.puntuacion1 + rF.puntuacion2 + rF.puntuacion3;
+	cout << "\n\tPuntuación 1:\t\t"; cout << rF.puntuacion1;
+	cout << "\n\tPuntuación 2:\t\t"; cout << rF.puntuacion2;
+	cout << "\n\tPuntuación 3:\t\t"; cout << rF.puntuacion3;
+	cout << "\n\n";
 }
