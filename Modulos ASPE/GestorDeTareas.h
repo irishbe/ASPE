@@ -34,6 +34,8 @@ void estadisticasTareas();
 void renovar_tiempos();
 string formato_estado(Tarea t);
 int calcular_prioridad_estado(char estado);
+void verificar_estadisticas();
+void actualizar_estadisticas(int valor, int campo);
 
 /*---------------------------------------------------- MAIN ----------------------------------------------------*/
 void GestorDeTareas(string perfil){
@@ -56,7 +58,7 @@ void GestorDeTareas(string perfil){
 		
 		opc = opcionSeleccionada(menuTareas, "GESTOR DE TAREAS", 8);
 		
-		renovar_tiempos();
+		verificar_estadisticas(); renovar_tiempos();
 		
 		switch(opc){
 			case 1: leer(); system("pause"); break;
@@ -86,10 +88,6 @@ void GestorDeTareas(string perfil){
 
 /*------------------------------------------------- FUNCIONES CRUD -------------------------------------------------*/
 void crear(){
-	//Preparacion del registro historico de tareas
-	FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
-	fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
-	
 	//Apertura del archivo y definicion de variables
 	int i=1, continuar;
 	FILE *archivo = fopen(archivoTareas, "a+b");
@@ -123,13 +121,13 @@ void crear(){
 		
 		//Incrementa los contadores del registro historico y los guarda
 		switch( t.estado ){
-			case 't': eT.ntareasTerminadas++; break;
-			case 'p': eT.ntareasPorTerminar++; break;
-			case 'v': eT.ntareasVencidas++; break;
+			case 't': actualizar_estadisticas(1,2); break;
+			case 'p': actualizar_estadisticas(1,3); break;
+			case 'v': actualizar_estadisticas(1,4); break;
 		}
 		
 		fwrite(&t,sizeof(Tarea),1,archivo);
-		i++; eT.ntareasCreadas++;
+		i++; actualizar_estadisticas(1,1);
 		cout<<"\n\t"; colorTextoFondo("Tarea creada con éxito", blancoBrillante, verde);
 		
 		//Verificar valor de confirmacion
@@ -145,10 +143,7 @@ void crear(){
 		
 	}while( continuar == 1 );
 	
-	fseek(estadisTareas, 0, SEEK_SET);
-	fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
-	
-	fclose(archivo); fclose(estadisTareas);
+	fclose(archivo);
 }
 
 void leer(){
@@ -211,10 +206,8 @@ void actualizar(){
     
 	do{
 		FILE *archivo = fopen(archivoTareas, "r+b");
-		FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
 		Tarea t;
 		
-		fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
 		system("cls"); leer();
 		
 		cout<<"\n\tQue desea actualizar? "<<endl;
@@ -228,6 +221,7 @@ void actualizar(){
 		if(opcion != '0'){
 			fseek(archivo, id * sizeof(Tarea), SEEK_SET);
 			fread(&t, sizeof(Tarea), 1, archivo);
+			
 			char estadoAntiguo = t.estado;
 			
 			switch(opcion){
@@ -260,14 +254,15 @@ void actualizar(){
 					
 					//Reestablecer el conteo
 					switch( estadoAntiguo ){
-						case 't': eT.ntareasTerminadas--; break;
-						case 'p': eT.ntareasPorTerminar--; break;
-						case 'v': eT.ntareasVencidas--; break;
+						case 't': actualizar_estadisticas(-1,2); break;
+						case 'p': actualizar_estadisticas(-1,3); break;
+						case 'v': actualizar_estadisticas(-1,4); break;
 					}
+					
 					switch( t.estado ){
-						case 't': eT.ntareasTerminadas++; break;
-						case 'p': eT.ntareasPorTerminar++; break;
-						case 'v': eT.ntareasVencidas++; break;
+						case 't': actualizar_estadisticas(1,2); break;
+						case 'p': actualizar_estadisticas(1,3); break;
+						case 'v': actualizar_estadisticas(1,4); break;;
 					}
 					
 					break;
@@ -295,14 +290,14 @@ void actualizar(){
 					
 					//Reestablecer el conteo
 					switch( estadoAntiguo ){
-						case 't': eT.ntareasTerminadas--; break;
-						case 'p': eT.ntareasPorTerminar--; break;
-						case 'v': eT.ntareasVencidas--; break;
+						case 't': actualizar_estadisticas(-1,2); break;
+						case 'p': actualizar_estadisticas(-1,3); break;
+						case 'v': actualizar_estadisticas(-1,4); break;
 					}
 					switch( t.estado ){
-						case 't': eT.ntareasTerminadas++; break;
-						case 'p': eT.ntareasPorTerminar++; break;
-						case 'v': eT.ntareasVencidas++; break;
+						case 't': actualizar_estadisticas(1,2); break;
+						case 'p': actualizar_estadisticas(1,3); break;
+						case 'v': actualizar_estadisticas(1,4); break;;
 					}
 					break;
 				}
@@ -314,12 +309,9 @@ void actualizar(){
 			fseek(archivo, id * sizeof(Tarea), SEEK_SET);  
         	fwrite(&t, sizeof(Tarea), 1, archivo);
         	
-        	fseek(estadisTareas, 0, SEEK_SET);
-			fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
-        	
 			cout<<"\n\t"; colorTextoFondo("Tarea actualizada con éxito", blancoBrillante, verde); cout<<endl;
         }    
-		fclose(archivo); fclose(estadisTareas);
+		fclose(archivo);
 		renovar_tiempos();
 		
 		cout<<"\n\t"; system("pause");
@@ -444,10 +436,45 @@ void metodos_ordenamiento(){
 	fclose(archivo);
 }
 
-void estadisticasTareas(){
-	//Actualiza los valores antes de calcularlos
+void verificar_estadisticas(){
 	FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
-	fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
+	
+	if( !estadisTareas ){
+		estadisTareas = fopen(archivoEstadisticasTareas, "w+b");
+		
+		//Inicialización
+		eT = {0,0,0,0};
+		fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
+		fclose(estadisTareas);
+	}else{
+		fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
+		fclose(estadisTareas);
+	}
+}
+
+void actualizar_estadisticas(int valor, int campo){
+	verificar_estadisticas();
+
+	switch (campo) {
+		case 1: eT.ntareasCreadas += valor; break;
+		case 2: eT.ntareasTerminadas += valor; break;
+		case 3: eT.ntareasPorTerminar += valor; break;
+		case 4: eT.ntareasVencidas += valor; break;
+    }
+    
+	// Guardar los cambios en el archivo
+	FILE *estadisTareas = fopen(archivoEstadisticasTareas, "w+b");
+	if( !estadisTareas ){
+		cout << "\n\t"; colorTextoFondo("No se pudo abrir el archivo de estadísticas", blancoBrillante, rojo); cout << "\n\n";
+		return;
+	}
+	
+	fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
+	fclose(estadisTareas);
+}
+
+void estadisticasTareas(){
+	verificar_estadisticas();
 	
 	cout << "\n\t"; colorTexto("ESTADÍSTICAS DEL GESTOR DE TAREAS", amarilloClaro);
 	
@@ -466,12 +493,10 @@ void estadisticasTareas(){
 	}else{
 		cout << "\n\n\t"; colorTextoFondo("No se encontraron tareas registradas!", blancoBrillante, rojo);
 	}
+
 	cout<<"\n\n";
-	
 	c1 = eT.ntareasCreadas > 0;
 	c2 = eT.ntareasTerminadas > eT.ntareasVencidas;
-	
-	fclose(estadisTareas);
 }
 
 /*-------------------------------------------- FUNCIONES COMPLEMENTARIAS --------------------------------------------*/
@@ -493,16 +518,8 @@ void renovar_tiempos() {
 		archivo = fopen(archivoTareas, "r+b");
 	}
 	
-    FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
-	if(!estadisTareas){ // Si no abre por no tener datos dentro, lo crea
-	    estadisTareas = fopen(archivoEstadisticasTareas, "a+b");
-	    
-	    // Inicializar eT si es la primera vez que se crea el archivo
-        fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
-        fseek(estadisTareas, 0, SEEK_SET);
-	}
+    verificar_estadisticas();
 	
-	fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
     Fecha ahora = definir_fecha(0, 0, 0, 0);
     Tarea t;
     int id = 0;
@@ -523,8 +540,8 @@ void renovar_tiempos() {
 
         // Actualizar contadores y estado de la tarea si ha cambiado
         if (t.estado == 'p' && t.dias_plazo == 0) {
-            eT.ntareasPorTerminar--;
-            eT.ntareasVencidas++;
+            actualizar_estadisticas(-1,3);
+            actualizar_estadisticas(1,4);
             t.estado = 'v';
             
             // Reescribir la tarea actualizada en el archivo
@@ -533,8 +550,8 @@ void renovar_tiempos() {
         	fseek(archivo, id * sizeof(Tarea), SEEK_SET);
         	
 		} else if (t.estado == 'v' && t.dias_plazo > 0) {
-            eT.ntareasVencidas--;
-            eT.ntareasPorTerminar++;
+			actualizar_estadisticas(-1,4);
+            actualizar_estadisticas(1,3);
             t.estado = 'p';
             
             // Reescribir la tarea actualizada en el archivo
@@ -546,11 +563,7 @@ void renovar_tiempos() {
     }
 
     // Reescribir los contadores modificados
-    fseek(estadisTareas, 0, SEEK_SET);
-    fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
-
     fclose(archivo);
-    fclose(estadisTareas);
 }
 
 int calcular_prioridad_estado(char estado){
