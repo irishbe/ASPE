@@ -864,11 +864,13 @@ void estadisticasFlashcards() {
 	cout << "\n\tMazos creados:\t\t"; cout <<eF.mazosCreados;
 	cout << "\n\tMazos eliminados:\t"; cout << eF.mazosEliminados;
 	cout << "\n\n\tRepasos totales:\t"; cout << eF.repasosTotales;
-	cout << "\n\tRepasos completados:\t"; cout << eF.repasosTotales - eF.repasosCancelados;
-	cout << "\n\tRepasos cancelados:\t"; cout << eF.repasosCancelados;
-	cout << "\n\n\tFlashcards repasadas:\t"; cout << eF.puntuacion1 + eF.puntuacion2 + eF.puntuacion3;
-	cout << "\n\tPuntuación 1:\t\t"; cout << eF.puntuacion1;
-	cout << "\n\tPuntuación 2:\t\t"; cout << eF.puntuacion2;
-	cout << "\n\tPuntuación 3:\t\t"; cout << eF.puntuacion3;
+	float repasosCompletados = eF.repasosTotales - eF.repasosCancelados;
+	cout << "\n\tRepasos completados:\t"; cout << repasosCompletados; cout << "	" << (repasosCompletados/eF.repasosTotales) * 100 << " %";
+	cout << "\n\tRepasos cancelados:\t"; cout << eF.repasosCancelados; cout << "	" << (eF.repasosCancelados/eF.repasosTotales) * 100 << " %";
+	float puntuacion123 = eF.puntuacion1 + eF.puntuacion2 + eF.puntuacion3;
+	cout << "\n\n\tFlashcards repasadas:\t"; cout << puntuacion123;
+	cout << "\n\tPuntuación 1:\t\t"; cout << eF.puntuacion1; cout << "	" << (eF.puntuacion1/puntuacion123) * 100 << " %";
+	cout << "\n\tPuntuación 2:\t\t"; cout << eF.puntuacion2; cout << "	" << (eF.puntuacion2/puntuacion123) * 100 << " %";
+	cout << "\n\tPuntuación 3:\t\t"; cout << eF.puntuacion3; cout << "	" << (eF.puntuacion3/puntuacion123) * 100 << " %";
 	cout << "\n\n";
 }
