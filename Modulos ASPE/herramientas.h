@@ -81,6 +81,7 @@ int opcionSeleccionada(string textoOpciones[], string titulo, int numeroOpciones
 		//Mostrando opciones del menu
 		for(int i=0; i < numeroOpciones; i++){
 			cout << "\n\t";
+			
 			if(opcionSeleccionada == i){
 				colorTextoFondo(textoOpciones[i], blancoBrillante, aguamarina);
 			}else{
@@ -117,7 +118,13 @@ int opcionSelecGotoxy(string textoOpciones[], int numeroOpciones, int x, int y){
 	do{
 		//Mostrando opciones del menu
 		for(int i=0; i < numeroOpciones; i++){
-			gotoxy(x+40,y+5+i);
+			
+			if( i != numeroOpciones ){
+				gotoxy(x+40,y+5+i);
+			}else{
+				gotoxy(x+40,y+5+i);
+			}
+			
 			if(opcionSeleccionada == i){
 				colorTextoFondo(textoOpciones[i], blancoBrillante, aguamarina);
 			}else{
