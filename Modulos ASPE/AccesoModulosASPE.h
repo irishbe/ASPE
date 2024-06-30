@@ -65,7 +65,7 @@ void AccesoModulosASPE(string perfil){
 			opcModulos = opcionSeleccionada(opcionesModulos, "Perfil: " + perfil + "\n\n\tModulos ASPE", 5);
 			
 	   		switch(opcModulos){
-	   			case 1: GestorDeTareas(perfil); break;
+	   			case 1: GestorDeTareas(); break;
 	   			case 2: SistemaDeFlashcards(); break;
 	   			case 3: PonderadoNotas(); break;
 	   			case 4: CerrarPeriodoAcademico(perfil); break;
