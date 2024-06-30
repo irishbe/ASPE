@@ -1,10 +1,12 @@
 #include <iostream>
-#include <windows.h>
 #include <string>
+#include <stdlib.h>
 #include "controldeltiempo.h"
+#include "herramientas.h"
 
 using namespace std;
-const char *nombre_archivo = "fichero.dat";
+const char *archivoTareas = "infoTareas.dat";
+const char *archivoEstadisticasTareas = "estadisticasTareas.dat";
 
 struct Tarea{
 	char nombre[31], estado;
@@ -12,10 +14,12 @@ struct Tarea{
 	Fecha fcreacion, fplazo;
 };
 
-//Variables globales
-short i=0, j=0, ntareas;
-Tarea t;
-Fecha ahora = definir_fecha(0,0,0,0);
+struct Estadisticas{
+	int ntareasCreadas=0, ntareasTerminadas=0, ntareasPorTerminar=0, ntareasVencidas=0;
+}eT;
+
+//Contador tareas global
+int contTareas;
 
 //Declaracion de las funciones CRUD
 void leer();
@@ -23,193 +27,348 @@ void crear();
 void actualizar();
 void eliminar();
 void metodos_ordenamiento();
+void estadisticasTareas();
 
 //Declaracion de las funciones complementarias
-void gotoxy(int x, int y);
-string formato_estado(Tarea x);
 void renovar_tiempos();
-short prioridad_estado(char estado);
-
-
+string formato_estado(Tarea t);
+int calcular_prioridad_estado(char estado);
 
 /*---------------------------------------------------- MAIN ----------------------------------------------------*/
 int main(){
-	char opc;
+	SetConsoleOutputCP(CP_UTF8);
+	
+	int opc;
+	string menuTareas[8]{
+		"1. Leer Tareas",
+		"2. Crear Tarea",
+		"3. Actualizar Tarea",
+		"4. Eliminar Tarea",
+		"5. Metodos de ordenamiento",
+		"6. Eliminar todas las tareas guardadas",
+		"7. Mostrar resultados estadísticos",
+		"\n\tESC. Salir "
+	};
 	
 	do{
 		system("CLS");
-		cout<<"\n--------------------------------------------   GESTOR DE TAREAS   --------------------------------------------"<<endl<<endl;
-		cout<<"1. Leer Tareas"<<endl;
-		cout<<"2. Crear Tarea"<<endl;
-		cout<<"3. Actualizar Tarea"<<endl;
-		cout<<"4. Eliminar Tarea"<<endl;
-		cout<<"5. Realizar un metodo de ordenamiento"<<endl;
-		cout<<"6. Eliminar todas las tareas guardadas"<<endl;
-		cout<<"0. SALIR "<<endl;
 		
-		cout<<"\nOPCION ---> ";cin>>opc;
-		system("CLS");
+		opc = opcionSeleccionada(menuTareas, "GESTOR DE TAREAS", 8);
 		
-		ahora = definir_fecha(0,0,0,0);
+		renovar_tiempos();
 		
 		switch(opc){
-			case '1': leer(); system("pause"); break;
-			case '2': crear(); break;
-			case '3': actualizar(); break;
-			case '4': eliminar(); break;
-			case '5': metodos_ordenamiento(); break;
-			case '6':{
+			case 1: leer(); system("pause"); break;
+			case 2: crear(); break;
+			case 3: actualizar(); break;
+			case 4: eliminar(); break;
+			case 5: metodos_ordenamiento(); break;
+			case 6:{
 				//Mensaje de confirmacion a la eliminacion de tareas
-				bool confirmar;
+				int confirmar;
 				leer();
-				cout<<"Esta seguro de eliminar todas las tareas guardadas? ( 1: Si | 0: No ): "; cin>>confirmar;
-				if( confirmar ){
-					remove(nombre_archivo);
-				}
+				do{
+					cout<<"Esta seguro de eliminar todas las tareas guardadas? ( 1: Si | 0: No ): "; cin>>confirmar;
+					if(cin.fail() || (confirmar != 1  && confirmar != 0)) {
+						cout<<"\n\n"; colorTextoFondo("Opcion inválida", blancoBrillante, rojo); cout<<"\n\n";
+					}
+				}while(cin.fail() || (confirmar != 1  && confirmar != 0));
+				
+				if( confirmar==1 ) { remove(archivoTareas); }
 				break;
 			}
-			case '0': system("CLS"); cout<<"Hasta pronto..."<<endl; break;
-			default: system("CLS"); cout<<"Opcion invalida"<<endl<<endl; system("pause");
+			case 7: estadisticasTareas(); system("pause"); break;
+			case 0: system("CLS"); cout<<"Hasta pronto..."; break;
 		}
-	}while(opc != '0');
+	}while(opc != 0);
 	
 	return 0;
 }
 
-
-
 /*------------------------------------------------- FUNCIONES CRUD -------------------------------------------------*/
 void crear(){
-	//Apertura del archivo y definicion de variables
-	i=1;
-	bool continuar;
-	FILE *archivo = fopen(nombre_archivo, "a+b");
+	//Preparacion del registro historico de tareas
+	FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
+	fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
 	
-	//Solicitud de datos de la tarea a agregar
-	cout<<"- [ Creacion de tareas ] - "<<endl;
+	//Apertura del archivo y definicion de variables
+	int i=1, continuar;
+	FILE *archivo = fopen(archivoTareas, "a+b");
+	Tarea t;
 	
 	do{
-		//Evita la saturacion de la pantalla
-		if( i % 3 == 0){
-			system("CLS");
-			cout<<"> Crear Tareas";
-		}
+		//Evita la saturacion de pantalla
+		system("CLS");
+		cout<<"> Crear Tareas";
+		cout<<"\n\n Tarea "<<i<<endl<<endl;
 		
 		fflush(stdin);
-		cout<<"\n\nTarea "<<i<<endl<<endl;
-		cout<<"\tDigite el nombre de la tarea: "; cin.getline(t.nombre,30,'\n');
-		cout<<"\tDigite los dias de plazo: "; cin>>t.dias_plazo;
+		cout<<"\tDigite el nombre de la tarea: "; cin.getline(t.nombre,31,'\n'); cin.clear();
+		//Verificar que los dias de plazo sean validos
+		do{
+			cin.clear();
+			fflush(stdin);
+			cout<<"\n\tDigite los dias de plazo: "; cin>>t.dias_plazo;
+			
+			if(cin.fail() || t.dias_plazo < 0) {	
+				cout<<"\n\t"; colorTextoFondo("Opcion inválida", blancoBrillante, rojo); cout<<"\n";
+			}
+		}while( cin.fail() || t.dias_plazo < 0);
+		
 		t.fcreacion = definir_fecha(0,0,0,0);
         t.fplazo = definir_fecha(t.dias_plazo,0,0,0);
-        cout<<"\tSeleccione un estado ( T: Terminada | P: Por terminar ): "; cin>>t.estado;
+        
+		fflush(stdin);
+		cout<<"\n\tSeleccione un estado ( T: Terminada | P: Por terminar ): "; cin>>t.estado;
+		t.estado = tolower(t.estado);
+		
+		//Incrementa los contadores del registro historico y los guarda
+		switch( t.estado ){
+			case 't': eT.ntareasTerminadas++; break;
+			case 'p': eT.ntareasPorTerminar++; break;
+			case 'v': eT.ntareasVencidas++; break;
+		}
 		
 		fwrite(&t,sizeof(Tarea),1,archivo);
+		i++; eT.ntareasCreadas++;
+		cout<<"\n\t"; colorTextoFondo("Tarea creada con éxito", blancoBrillante, verde);
 		
-		cout<<"\nContinuar creando tareas? ( 1: Si | 0: No ): "; cin>>continuar;
-		i++;	
-	}while(continuar);
+		//Verificar valor de confirmacion
+		do{
+			cin.clear();
+			fflush(stdin);
+			cout<<"\n\n\tContinuar creando tareas? ( 1: Si | 0: No ): "; cin>>continuar;
+			
+			if( (continuar != 1 && continuar !=0) || cin.fail() ) {		
+				cout<<"\n\t";colorTextoFondo("Opcion inválida", blancoBrillante, rojo); cout<<"\n\t";
+			}
+		}while( (continuar != 1 && continuar !=0) || cin.fail() ) ;
+		
+	}while( continuar == 1 );
 	
-	fclose(archivo);
+	fseek(estadisTareas, 0, SEEK_SET);
+	fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
+	
+	fclose(archivo); fclose(estadisTareas);
 }
 
 void leer(){
 	//Renovar tiempos antes de visualizar la tabla de tareas
-	ahora = definir_fecha(0,0,0,0);
-	renovar_tiempos();
+	FILE *archivo = fopen(archivoTareas, "r+b");
+	Tarea t;
 	
-	FILE *archivo = fopen(nombre_archivo, "r+b");
+	//INDICAR FECHA ACTUAL
+	Fecha ahora = definir_fecha(0,0,0,0);
+	gotoxy(0,1); cout<<"> FECHA ACTUAL: "<<formato_fecha(ahora)<<" - "<<formato_hora(ahora);
 	
-	//CREACION DE LA TABLA DE TAREAS ACTIVAS
-	short id=0, idCol=6, nombreCol=10, dpCol=45, fcCol=56, fpCol=77, estadoCol=98, fila=3;
+	//TITULOS DE LAS COLUMNAS ACTIVAS
+	int id=0, fila=4;
 	
-	//TITULOS
-	gotoxy(idCol, fila); cout<<"ID";
-	gotoxy(nombreCol, fila); cout<<"Nombre";
-	gotoxy(dpCol, fila); cout<<"D.Plazo";
-	gotoxy(fcCol, fila); cout<<"F.Creacion";
-	gotoxy(fpCol, fila); cout<<"F.Plazo";
-	gotoxy(estadoCol, fila); cout<<"Estado";
+	gotoxy(6, fila); cout<<"ID";
+	gotoxy(10, fila); cout<<"Nombre";
+	gotoxy(45, fila); cout<<"D.Plazo";
+	gotoxy(56, fila); cout<<"F.Creacion";
+	gotoxy(77, fila); cout<<"F.Plazo";
+	gotoxy(98, fila); cout<<"Estado";
 	fila++; 
 	gotoxy(4, fila); cout<<"-------------------------------------------------------------------------------------------------------------"; fila++;
 	
 	//IMPRESION DE LOS DATOS DE CADA TAREA ACTIVA
 	while( fread(&t, sizeof(Tarea), 1, archivo) ){
-		gotoxy(idCol, fila); cout<<id;
-		gotoxy(nombreCol, fila); cout<<t.nombre;
-		
-		gotoxy(dpCol, fila); cout<<t.dias_plazo;
-		gotoxy(fcCol, fila); cout<<formato_fecha(t.fcreacion)<<" - "<<formato_hora(t.fcreacion);
-		gotoxy(fpCol, fila); cout<<formato_fecha(t.fplazo)<<" - "<<formato_hora(t.fplazo);
-		gotoxy(estadoCol, fila); cout<<formato_estado(t);
+		gotoxy(6, fila); cout<<id;
+		gotoxy(10, fila); cout<<t.nombre;
+		gotoxy(45, fila); cout<<t.dias_plazo;
+		gotoxy(56, fila); cout<<formato_fecha(t.fcreacion)<<" - "<<formato_hora(t.fcreacion);
+		gotoxy(77, fila); cout<<formato_fecha(t.fplazo)<<" - "<<formato_hora(t.fplazo);
+		gotoxy(98, fila); cout<<formato_estado(t);
 		fila++; id++;
 	}	
 	
 	fclose(archivo);
-	cout<<endl<<endl<<endl;
+	cout<<"\n\n\n";
 }
 
 void actualizar(){
 	//Visualizacion de las tareas activas
 	leer();
-	cout<<"- [ Actualizar ] - "<<endl<<endl;
+	cout<<"> ACTUALIZAR TAREA"<<endl<<endl;
 	
-	//Apertura de archivos y definicion de variables
-	short id = 0;
-	FILE *archivo = fopen(nombre_archivo, "r+b");
+	//Apertura de archivos y definicion de variables	
+	int id = 0;
 	
 	//Solicitud del id
-	fflush(stdin);
-	cout<<"Id de la Tarea que va actualizar: ";cin>>id;
-	fseek(archivo, id * sizeof(Tarea), SEEK_SET);
-	
-	//Recepcion de datos a cambiar de la tarea elegida
-	fflush(stdin);
-	cout<<"\n\tDigite el nombre del Tarea: "; cin.getline(t.nombre,30,'\n');
-	cout<<"\tDigite los dias de plazo: "; cin>>t.dias_plazo;
-	t.fcreacion = definir_fecha(0,0,0,0);
-	t.fplazo = definir_fecha(t.dias_plazo,0,0,0);
-    cout<<"\tSeleccione un estado (T: Terminada / P: Por terminar): "; cin>>t.estado;
-	
-	//Ejecucion de cambios
-	fwrite(&t,sizeof(Tarea),1,archivo);
-	fclose(archivo);
+	char opcion;
+	do{
+		cin.clear();
+		fflush(stdin);
+		
+		cout<<"\tId de la Tarea que va actualizar: ";cin>>id;
+		if(id<0 || id>(contTareas-1) || cin.fail() ){
+			cout<<"\n\t";
+			colorTextoFondo("Id no existente", blancoBrillante, rojo);
+			cout<<"\n\n";
+		}
+	}while(id<0 || id > (contTareas-1) || cin.fail() );
+    
+	do{
+		FILE *archivo = fopen(archivoTareas, "r+b");
+		FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
+		Tarea t;
+		
+		fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
+		system("cls"); leer();
+		
+		cout<<"\n\tQue desea actualizar? "<<endl;
+		cout<<"\t1.Nombre"<<endl;
+		cout<<"\t2.Dias de plazo"<<endl;
+		cout<<"\t3.Estado"<<endl;
+		cout<<"\t4.Todos los campos"<<endl;
+		cout<<"\t0.Salir"<<endl;
+		cout<<"\n\tIngrese la opcion:  ";cin>>opcion;
+		
+		if(opcion != '0'){
+			fseek(archivo, id * sizeof(Tarea), SEEK_SET);
+			fread(&t, sizeof(Tarea), 1, archivo);
+			char estadoAntiguo = t.estado;
+			
+			switch(opcion){
+				case '1':{
+					fflush(stdin);
+					cout<<"\tDigite el nombre de la tarea: "; cin.getline(t.nombre,31,'\n'); cin.clear();
+					
+					break;
+				}
+				case '2':{
+					fflush(stdin);
+					//Verificar que los dias de plazo sean validos
+					do{
+						cin.clear();
+						fflush(stdin);
+						cout<<"\n\tDigite los dias de plazo: "; cin>>t.dias_plazo;
+						
+						if(cin.fail() || t.dias_plazo < 0) {		
+							cout<<"\n\t"; colorTextoFondo("Opcion inválida", blancoBrillante, rojo); cout<<endl;
+						}
+					}while( cin.fail() || t.dias_plazo < 0) ;
+					
+					t.fcreacion = definir_fecha(0,0,0,0);
+					t.fplazo = definir_fecha(t.dias_plazo,0,0,0);
+					break;
+				}
+				case '3':{
+					fflush(stdin);
+					cout<<"\n\tSeleccione un estado (T: Terminada / P: Por terminar): "; cin>>t.estado;
+					
+					//Reestablecer el conteo
+					switch( estadoAntiguo ){
+						case 't': eT.ntareasTerminadas--; break;
+						case 'p': eT.ntareasPorTerminar--; break;
+						case 'v': eT.ntareasVencidas--; break;
+					}
+					switch( t.estado ){
+						case 't': eT.ntareasTerminadas++; break;
+						case 'p': eT.ntareasPorTerminar++; break;
+						case 'v': eT.ntareasVencidas++; break;
+					}
+					
+					break;
+				}	
+				case'4':{
+					//Recepcion de datos a cambiar de la tarea elegida
+					fflush(stdin);
+					cout<<"\tDigite el nombre de la tarea: "; cin.getline(t.nombre,31,'\n'); cin.clear();
+					
+					//Verificar que los dias de plazo sean validos
+					do{
+						cin.clear();
+						fflush(stdin);
+						cout<<"\n\tDigite los dias de plazo: "; cin>>t.dias_plazo;
+						
+						if(cin.fail() || t.dias_plazo < 0) {
+							cout<<"\n\t"; colorTextoFondo("Opcion inválida", blancoBrillante, rojo); cout<<endl;
+						}
+					}while( cin.fail() || t.dias_plazo < 0) ;
+					
+					t.fcreacion = definir_fecha(0,0,0,0);
+					t.fplazo = definir_fecha(t.dias_plazo,0,0,0);
+					
+					cout<<"\n\tSeleccione un estado (T: Terminada / P: Por terminar): "; cin>>t.estado;
+					
+					//Reestablecer el conteo
+					switch( estadoAntiguo ){
+						case 't': eT.ntareasTerminadas--; break;
+						case 'p': eT.ntareasPorTerminar--; break;
+						case 'v': eT.ntareasVencidas--; break;
+					}
+					switch( t.estado ){
+						case 't': eT.ntareasTerminadas++; break;
+						case 'p': eT.ntareasPorTerminar++; break;
+						case 'v': eT.ntareasVencidas++; break;
+					}
+					break;
+				}
+				default: {
+					cout<<"\n\t"; colorTextoFondo("Opción inválida", blancoBrillante, rojo);
+	            }
+	        }
+	        
+			fseek(archivo, id * sizeof(Tarea), SEEK_SET);  
+        	fwrite(&t, sizeof(Tarea), 1, archivo);
+        	
+        	fseek(estadisTareas, 0, SEEK_SET);
+			fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
+        	
+			cout<<"\n\t"; colorTextoFondo("Tarea actualizada con éxito", blancoBrillante, verde); cout<<endl;
+        }    
+		fclose(archivo); fclose(estadisTareas);
+		renovar_tiempos();
+		
+		cout<<"\n\t"; system("pause");
+	}while(opcion != '0');
 }
 
 void eliminar(){
 	//Visualizacion de las tareas activas
 	leer();
-	cout<<"- [ Eliminar ] - "<<endl<<endl;
+	cout<<"> ELIMINAR TAREA"<<endl<<endl;
 	
 	//Apertura de archivos y definicion de variables
-	short id=0, id_borrar;
-	FILE *archivo = fopen(nombre_archivo, "r+b");
+	FILE *archivo = fopen(archivoTareas, "r+b");
 	FILE *temp = fopen("temp.dat", "w+b");
+	int id=0, id_borrar;
+	Tarea t;
 	
 	//Solicitud del id
-	fflush(stdin);
-	cout<<"Id de la Tarea que va a eliminar: ";cin>>id_borrar;                                
+	do{
+		cin.clear();
+		fflush(stdin);
+		cout<<"Id de la Tarea que va a eliminar: ";cin>>id_borrar;
+		  
+		if(id_borrar<0 || id_borrar>(contTareas-1) || cin.fail() ){
+			cout<<"\n\n"; colorTextoFondo("Id no existente", blancoBrillante, rojo); cout<<"\n\n";
+		}  
+		                            
+	}while(id_borrar<0 || id_borrar>(contTareas-1) || cin.fail() );
 	
-	//Duplicado de las tareas del archivo original al temp a excepcion del id
-	for(id=0; id < ntareas ; id++){
+	//Duplicado de las tareas del archivo original al temp a excepcion del id		
+	for(id=0; id < contTareas ; id++){
 		fread(&t, sizeof(Tarea), 1, archivo);
 		
 		if (id_borrar != id){
 			fwrite(&t, sizeof(Tarea), 1, temp);
 		}
 	}
-
 	fclose(archivo); fclose(temp);
 	
 	//Pase de las tareas guardadas en temp al archivo original
-	archivo = fopen(nombre_archivo, "w+b");
+	archivo = fopen(archivoTareas, "w+b");
 	temp = fopen("temp.dat", "r+b");
 	
-	for(id=0; id < ntareas - 1; id++){
+	for(id=0; id < contTareas - 1 ; id++){
 		fread(&t, sizeof(Tarea), 1, temp);
 		fwrite(&t, sizeof(Tarea), 1, archivo);
 	}
-	
-	fclose(archivo); 
+	fclose(archivo);
 	fclose(temp); remove("temp.dat");
 	
 	//Visualizacion de los cambios
@@ -219,35 +378,31 @@ void eliminar(){
 }
 
 void metodos_ordenamiento(){
-	Tarea aux;
+	Tarea t, aux;
 	bool ordenado, condicion, opc_invalida;
 	char opc;
-	FILE *archivo = fopen(nombre_archivo, "r+b");
+	FILE *archivo = fopen(archivoTareas, "r+b");
 	
 	do{
 		//MENU DE OPCIONES PARA LOS METODOS DE ORDENAMIENTO
 		system("CLS");
 		
 		leer();
-		cout<<"- [ Metodos de ordenamiento ] - "<<endl<<endl;
-		
-		
+ 		cout<<"> MÉTODOS DE ORDENAMIENTO"<<endl<<endl;
 		cout<<"1. Ordenamiento por fecha de creacion"<<endl;
 		cout<<"2. Ordenamiento alfabetico (A - Z)"<<endl;
 		cout<<"3. Ordenamiento por prioridad (Menores dias de plazo)"<<endl;
-		cout<<"4. Ordenamiento por estado (Terminado > Por terminar > Vencido)"<<endl;
+		cout<<"4. Ordenamiento por estado (Terminada > Por terminar > Vencida)"<<endl;
 		cout<<"0. SALIR "<<endl;
 		
 		cout<<"\nOPCION ---> ";cin>>opc;
-		
-		system("CLS");
 		
 		if( opc != '0'){
 			do{
 				opc_invalida = false;
 				ordenado = true;
 				
-				for(j=0; j < ntareas - 1; j++){
+				for(int j=0; j < contTareas - 1; j++){
 					fseek(archivo, j * sizeof(Tarea), SEEK_SET);
 					fread(&t, sizeof(Tarea), 1, archivo);
 					fread(&aux, sizeof(Tarea), 1, archivo);
@@ -263,9 +418,9 @@ void metodos_ordenamiento(){
 						case '3': condicion = ( t.dias_plazo > aux.dias_plazo ); break;
 						
 						//ORDENAMIENTO POR ESTADO (TERMINADO > POR TERMINAR > VENCIDO)
-						case '4': condicion = ( prioridad_estado(t.estado) > prioridad_estado(aux.estado) ); break;
+						case '4': condicion = ( calcular_prioridad_estado(t.estado) > calcular_prioridad_estado(aux.estado) ); break;
 						
-						default: opc_invalida = true; cout<<"Opcion invalida"<<endl<<endl; system("pause");
+						default: cout<<"\n\n"; colorTextoFondo("Opción Inválida", blancoBrillante, rojo); cout<<"\n\n"; opc_invalida = true; system("pause");
 					}
 					
 					//Control de entrada no deseada
@@ -290,72 +445,113 @@ void metodos_ordenamiento(){
 	fclose(archivo);
 }
 
-
+void estadisticasTareas(){
+	//Actualiza los valores antes de calcularlos
+	FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
+	fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
+	
+	float porcentTerminadas=0, porcentPorTerminar=0, porcentVencidas=0;
+	
+	if(eT.ntareasCreadas > 0){
+		porcentTerminadas = (eT.ntareasTerminadas * 1.0f/eT.ntareasCreadas)*100;
+		porcentPorTerminar = (eT.ntareasPorTerminar * 1.0f/eT.ntareasCreadas)*100;
+		porcentVencidas = (eT.ntareasVencidas * 1.0f/eT.ntareasCreadas)*100;
+	}
+	
+	colorTexto("\n> RESULTADOS TAREAS\n", blancoBrillante);
+	
+	cout<<"\n\t- Tareas Creadas: "<<eT.ntareasCreadas;
+	cout<<"\n\t- Tareas Terminadas: "<<eT.ntareasTerminadas<<" ("<<porcentTerminadas<<"%)";
+	cout<<"\n\t- Tareas Por Terminar: "<<eT.ntareasPorTerminar<<" ("<<porcentPorTerminar<<"%)";
+	cout<<"\n\t- Tareas Vencidas: "<<eT.ntareasVencidas<<" ("<<porcentVencidas<<"%)"<<endl<<endl;
+	
+	fclose(estadisTareas);
+}
 
 /*-------------------------------------------- FUNCIONES COMPLEMENTARIAS --------------------------------------------*/
-void gotoxy(int x, int y){
-    HANDLE hcon;  
-    hcon = GetStdHandle(STD_OUTPUT_HANDLE);  
-    COORD dwPos;  
-    dwPos.X = x;  
-    dwPos.Y= y;  
-    SetConsoleCursorPosition(hcon,dwPos);  
+string formato_estado(Tarea t){
+	switch( tolower(t.estado) ){
+		case 't': return "Terminada"; break;
+		case 'p': return "Por terminar"; break;
+		case 'v': return "Vencida"; break;
+		default: return "Estado invalido";
+	}
 }
 
-string formato_estado(Tarea x){
-	string y;
-	
-	if( tolower(x.estado) == 't'){
-		y = "Terminada";
+void renovar_tiempos() {
+    FILE *archivo = fopen(archivoTareas, "r+b");
+	if(!archivo){
+		archivo = fopen(archivoTareas, "a+b");
+		fclose(archivo);
+		
+		archivo = fopen(archivoTareas, "r+b");
 	}
 	
-    if( tolower(x.estado) == 'p' ){
-		//Cambiar a vencido
-		if( ahora.segreales >= x.fplazo.segreales){
-			y = "Vencido";
-		}else{
-			y = "Por terminar";
-		}
+    FILE *estadisTareas = fopen(archivoEstadisticasTareas, "r+b");
+	if(!estadisTareas){ // Si no abre por no tener datos dentro, lo crea
+	    estadisTareas = fopen(archivoEstadisticasTareas, "a+b");
+	    
+	    // Inicializar eT si es la primera vez que se crea el archivo
+        fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
+        fseek(estadisTareas, 0, SEEK_SET);
 	}
-	return y;
+	
+	fread(&eT, sizeof(Estadisticas), 1, estadisTareas);
+    Fecha ahora = definir_fecha(0, 0, 0, 0);
+    Tarea t;
+    int id = 0;
+
+	contTareas = 0;
+    while( fread(&t, sizeof(Tarea), 1, archivo) ){
+        // Calcular los segundos transcurridos desde la creación de la tarea
+        long segreales_pasados = ahora.segreales - t.fcreacion.segreales;
+        int dias_pasados = segreales_pasados / 86400; // Convertir segundos a días
+
+        // Descontar los días pasados del plazo de la tarea
+        if (dias_pasados > 0) {
+            t.dias_plazo -= dias_pasados;
+            if (t.dias_plazo < 0) {
+                t.dias_plazo = 0; // Evitar valores negativos
+            }
+        }
+
+        // Actualizar contadores y estado de la tarea si ha cambiado
+        if (t.estado == 'p' && t.dias_plazo == 0) {
+            eT.ntareasPorTerminar--;
+            eT.ntareasVencidas++;
+            t.estado = 'v';
+            
+            // Reescribir la tarea actualizada en el archivo
+            fseek(archivo, id * sizeof(Tarea), SEEK_SET);
+        	fwrite(&t, sizeof(Tarea), 1, archivo);
+        	fseek(archivo, id * sizeof(Tarea), SEEK_SET);
+        	
+		} else if (t.estado == 'v' && t.dias_plazo > 0) {
+            eT.ntareasVencidas--;
+            eT.ntareasPorTerminar++;
+            t.estado = 'p';
+            
+            // Reescribir la tarea actualizada en el archivo
+            fseek(archivo, id * sizeof(Tarea), SEEK_SET);
+        	fwrite(&t, sizeof(Tarea), 1, archivo);
+        	fseek(archivo, id * sizeof(Tarea), SEEK_SET);
+        }
+        id++; contTareas++;
+    }
+
+    // Reescribir los contadores modificados
+    fseek(estadisTareas, 0, SEEK_SET);
+    fwrite(&eT, sizeof(Estadisticas), 1, estadisTareas);
+
+    fclose(archivo);
+    fclose(estadisTareas);
 }
 
-void renovar_tiempos(){
-	FILE *archivo = fopen(nombre_archivo, "r+b");
-	
-	//Mensaje de comprobacion
-	if(archivo){
-		cout<<"> Archivo abierto correctamente ";
-	}else{
-		cout<<"> Problema al abrir el archivo ";
+int calcular_prioridad_estado(char estado){
+	switch( estado ){
+		case 't': return 1; break;
+		case 'p': return 2; break;
+		case 'v': return 3; break;
+		default: return 0;
 	}
-	
-	ntareas = 0;
-	
-	//Renovar dias de plazo (dias que han pasado)
-	while( fread(&t, sizeof(Tarea), 1, archivo) ){
-		long segreales_pasados = (ahora.segreales - t.fcreacion.segreales);
-		
-		while( segreales_pasados >= 86400 && t.dias_plazo > 0){
-			segreales_pasados -= 86400;
-			t.dias_plazo --;
-		}
-		
-		if( t.dias_plazo == 0){
-			t.estado = 'v';
-		}
-		
-		ntareas++;
-	}
-	fclose(archivo);
-}
-
-short prioridad_estado(char estado){
-	short y = 0;
-	switch( tolower(estado) ){
-			case 't': y = 1; break;
-			case 'p': y = 2; break;
-			case 'v': y = 3; break;
-	}
-	return y;
 }
