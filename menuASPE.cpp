@@ -12,32 +12,21 @@ void eliminarUsuario();
 void eliminarDirectoriosDeDirectorios(string nombreDirectorio);
 
 int main(){
-	gotoxy(10,5);
-	colorTexto(
-	"\n\t\t       d8888  .d8888b.  8888888b.  8888888888"
-	"\n\t\t      d88888 d88P  Y88b 888   Y88b 888"
-	"\n\t\t     d88P888 Y88b.      888    888 888"       
-	"\n\t\t    d88P 888  Y888b.    888   d88P 8888888"    
-	"\n\t\t   d88P  888     Y88b.  8888888P   888"       
-	"\n\t\t  d88P   888       888  888        888"        
-	"\n\t\t d8888888888 Y88b  d88P 888        888"        
-	"\n\t\td88P     888  Y8888P    888        8888888888\n", blancoBrillante);
+	SetConsoleOutputCP(CP_UTF8);
+	tamanioFuente(10,21);
 	
-	colorTexto("\n\n\t\tBienvenido a la Aplicacion de Seguimiento del Progreso Estudiantil (ASPE)", blancoBrillante);
-    colorTexto("\n\n\t\tPresione cualquier tecla para continuar...", amarilloClaro);
-	ocultarCursor(); _getch(); system("cls");
-	
+	maximizarVentanaConsola();
     int opc;
-    string opcionesUsuarioes[5] = {
+    string opcionesUsuarios[5] = {
         "1. Crear nuevo Usuario ", 
         "2. Ingresar a un Usuario", 
         "3. Renombrar Usuario",
         "4. Eliminar Usuario",
-        "0. Salir"
+        "ESC. Salir"
     };
     
     do{
-        opc = opcionSeleccionada(opcionesUsuarioes, "MENU DE UsuarioES", 5);
+        opc = opcionSelecGotoxy(opcionesUsuarios, 5, 50, 8);
         
         system("cls");
         switch(opc){
@@ -45,7 +34,7 @@ int main(){
             case 2: ingresarUsuario(); break;
             case 3: renombrarUsuario(); break;
             case 4: eliminarUsuario(); break;
-            case 0: colorTexto("\n\tSaliendo... \n\tMuchas gracias por utilizar ASPE\n", amarilloClaro);
+            case 0: colorTexto("\n\n\tSaliendo... \n\tMuchas gracias por utilizar ASPE\n", amarilloClaro);
         }
         ocultarCursor(); _getch(); system("cls");
         
@@ -57,7 +46,7 @@ int main(){
 void crearUsuario(){
     string usuario, periodoAcademico;
     
-    colorTexto("\n\t> Creando un nuevo usuario\n", blancoBrillante);
+    colorTexto("\n> Creando un nuevo usuario\n", blancoBrillante);
     
 	fflush(stdin);
 	cout<<"\n\tUsuario: "; getline(cin, usuario);
@@ -71,7 +60,7 @@ void crearUsuario(){
 int seleccionarUsuario(){
     WIN32_FIND_DATA archivo;
     HANDLE iterador = FindFirstFile("*", &archivo);
-    int cantUsuarioes = 0, i=0, j=0;
+    int cantUsuarios = 0, i=0, j=0;
     
     //Contabilizar la cantidad de Usuarioes
 	do{
@@ -79,8 +68,8 @@ int seleccionarUsuario(){
 			colorTextoFondo("Error al abrir el Usuario seleccionado", blancoBrillante, rojo);
 		}else if( archivo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && iterador != INVALID_HANDLE_VALUE){
 			string nombre = archivo.cFileName;
-			if(nombre != "." && nombre != ".." && nombre != "Modulos ASPE" && nombre != "Programas Independientes"){
-				cantUsuarioes++;
+			if(nombre != "." && nombre != ".." && nombre != "Modulos ASPE" && nombre != "Mazos ASPE" && nombre != "Programas Independientes"){
+				cantUsuarios++;
 			}
 		}
 	}while (FindNextFile(iterador, &archivo) != 0 && iterador != INVALID_HANDLE_VALUE);
@@ -88,7 +77,7 @@ int seleccionarUsuario(){
 	
 	//Se llena el vector con los nombres de los Usuarioes
 	iterador = FindFirstFile("*", &archivo);
-	listaUsuarios = new string [cantUsuarioes+1];
+	listaUsuarios = new string [cantUsuarios+1];
 	    	
 	do{
 		if(iterador == INVALID_HANDLE_VALUE){
@@ -96,7 +85,7 @@ int seleccionarUsuario(){
 		}else if( archivo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && iterador != INVALID_HANDLE_VALUE){
 			string nombre = archivo.cFileName;
 				
-			if(nombre != "." && nombre != ".." && nombre != "Modulos ASPE" && nombre != "Programas Independientes"){
+			if(nombre != "." && nombre != ".." && nombre != "Modulos ASPE" && nombre != "Mazos ASPE" && nombre != "Programas Independientes"){
 				listaUsuarios[i] = archivo.cFileName; i++;
 			}
 		}	
@@ -105,7 +94,7 @@ int seleccionarUsuario(){
 	listaUsuarios[i] = "CANCELAR";
 	FindClose(iterador);
 	  
-	return opcionSeleccionada(listaUsuarios, "> LISTADO DE UsuarioES", cantUsuarioes+1);
+	return opcionSeleccionada(listaUsuarios, "> LISTADO DE USUARIOS", cantUsuarios+1);
 }
 
 void ingresarUsuario(){
@@ -118,8 +107,9 @@ void ingresarUsuario(){
 	    AccesoModulosASPE(listaUsuarios[idUsuario]);
 	    SetCurrentDirectory("..");
 	}else{
-		colorTexto("\n\tVolviendo al menu...", amarilloClaro);
+		cout<<"\n\t"; colorTexto("Ocurrio un error al ingresar en un usuario...", rojo);
 	}
+	cout<<"\n\t"; colorTexto("Volviendo al menú principal ASPE...", amarilloClaro);
 }
 
 void renombrarUsuario(){
@@ -134,7 +124,7 @@ void renombrarUsuario(){
 		cout<<"\n\tNuevo Usuario: "; getline(cin, nuevoNombre);
 		fflush(stdin);
 		cout<<"\n\tNuevo nombre del periodo academico: "; getline(cin, nuevoPeriodoAcademico);
-			
+		
 		 
 		if( MoveFile(antiguoNombre.c_str(), (nuevoNombre + " - " + nuevoPeriodoAcademico).c_str() ) ){
 			colorTextoFondo("\n\tUsuario renombrado correctamente!\n", blancoBrillante, verde);
