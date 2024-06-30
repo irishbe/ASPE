@@ -38,7 +38,7 @@ void verificar_estadisticas();
 void actualizar_estadisticas(int valor, int campo);
 
 /*---------------------------------------------------- MAIN ----------------------------------------------------*/
-void GestorDeTareas(string perfil){
+void GestorDeTareas(){
 	//SetConsoleOutputCP(CP_UTF8);
 	
 	int opc;
