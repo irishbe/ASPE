@@ -192,10 +192,7 @@ void SistemaDeFlashcards() {
 				break;
 			}
 			case 7: {
-				verificarMazos();
-				if (nMazos>0){
-					estadisticasFlashcards();
-				}
+				estadisticasFlashcards();
 				break;
 			}
 			case 0: {
@@ -683,16 +680,16 @@ void repasoFlashcards() {
 			cin.clear();
 			cin >> confirmacion;
 			if (confirmacion != 0 && confirmacion != 1) {
-				colorTextoFondo("\n\n\tOpción inválida. Por favor ingrese 1 (SÍ) o 0 (NO).\n", blancoBrillante, rojo);
+				cout << "\n\n\t"; colorTextoFondo("Opción inválida. Por favor ingrese 1 (SÍ) o 0 (NO).", blancoBrillante, rojo); cout << "\n\n";
 			}
 		} while (confirmacion != 0 && confirmacion != 1);
 		
 		if (confirmacion == 1){
 			if (remove(rutaRepaso("mazoRepaso.txt").c_str()) == 0) {
-				colorTextoFondo("n\n\tEl archivo mazoRepaso.txt se ha eliminado correctamente.\n\n", blancoBrillante, verde);
+				cout << "\n\n\t"; colorTextoFondo("El archivo mazoRepaso.txt se ha eliminado correctamente.", blancoBrillante, verde); cout << "\n\n";
 				actualizarEstadistica(1,4);
 			} else {
-				colorTextoFondo("\n\n\tNo se pudo eliminar el archivo mazoRepaso.txt.\n\n", blancoBrillante, rojo);
+				cout << "\n\n\t"; colorTextoFondo("No se pudo eliminar el archivo mazoRepaso", blancoBrillante, rojo); cout << "\n\n";
 				return;
 			}
 		} else {
@@ -860,36 +857,43 @@ void estadisticasFlashcards() {
 	cout << "\n\t"; colorTexto("ESTADÍSTICAS DEL SISTEMA DE FLASHCARDS", amarilloClaro); cout<<"\n";
 	
 	verificarEstadistica();
+	verificarMazos();
 	
-	float repasosCompletados = eF.repasosTotales - eF.repasosCancelados;
-	float puntuacion123 = eF.puntuacion1 + eF.puntuacion2 + eF.puntuacion3;
+	// Convertir a float antes de realizar cálculos
+	float repasosTotales = static_cast<float>(eF.repasosTotales);
+	float repasosCancelados = static_cast<float>(eF.repasosCancelados);
+	float puntuacion1 = static_cast<float>(eF.puntuacion1);
+	float puntuacion2 = static_cast<float>(eF.puntuacion2);
+	float puntuacion3 = static_cast<float>(eF.puntuacion3);
+	
+	float repasosCompletados = repasosTotales - repasosCancelados;
+	float puntuacion123 = puntuacion1 + puntuacion2 + puntuacion3;
 	
 	
-	if( eF.mazosCreados > 0){
+	if( eF.mazosCreados > 0 && nMazos > 0){
 		cout << "\n\tMazos actuales:\t\t"; cout << nMazos;
 		cout << "\n\tMazos creados:\t\t"; cout <<eF.mazosCreados;
 		cout << "\n\tMazos eliminados:\t"; cout << eF.mazosEliminados;
-	}else{
-		cout << "\t"; colorTextoFondo("No se encontraron mazos registrados!", blancoBrillante, rojo);
 	}
 	
 	if( eF.repasosTotales > 0){
-		cout << "\n\n\tRepasos totales:\t"; cout << eF.repasosTotales;
-		cout << "\n\tRepasos completados:\t"; cout << repasosCompletados; cout << "	" << (repasosCompletados/eF.repasosTotales) * 100 << " %";
-		cout << "\n\tRepasos cancelados:\t"; cout << eF.repasosCancelados; cout << "	" << (eF.repasosCancelados/eF.repasosTotales) * 100 << " %";
+		cout << "\n\n\tRepasos totales:\t"; cout << repasosTotales;
+		cout << "\n\tRepasos completados:\t"; cout << repasosCompletados; cout << "	" << (repasosCompletados/repasosTotales) * 100 << " %";
+		cout << "\n\tRepasos cancelados:\t"; cout << repasosCancelados; cout << "	" << (repasosCancelados/repasosTotales) * 100 << " %";
 	}else{
-		cout << "\n\n\t"; colorTextoFondo("Cantidad de repasos realizados invalida!", blancoBrillante, rojo); cout<<"\n";
+		cout << "\n\t"; colorTextoFondo("Cantidad de repasos realizados inválida!", blancoBrillante, rojo); cout<<"\n";
 	}
 	
 	if( puntuacion123 > 0 ){
-		cout << "\n\tPuntuación 1:\t\t"; cout << eF.puntuacion1; cout << "	" << (eF.puntuacion1/puntuacion123) * 100 << " %";
-		cout << "\n\tPuntuación 2:\t\t"; cout << eF.puntuacion2; cout << "	" << (eF.puntuacion2/puntuacion123) * 100 << " %";
-		cout << "\n\tPuntuación 3:\t\t"; cout << eF.puntuacion3; cout << "	" << (eF.puntuacion3/puntuacion123) * 100 << " %";
+		cout << "\n\n\tFlashcards repasadas:\t"; cout << puntuacion123;
+		cout << "\n\tPuntuación 1:\t\t"; cout << puntuacion1; cout << "	" << (puntuacion1/puntuacion123) * 100 << " %";
+		cout << "\n\tPuntuación 2:\t\t"; cout << puntuacion2; cout << "	" << (puntuacion2/puntuacion123) * 100 << " %";
+		cout << "\n\tPuntuación 3:\t\t"; cout << puntuacion3; cout << "	" << (puntuacion3/puntuacion123) * 100 << " %";
 		cout << "\n\n";
 	}else{
-		cout << "\n\t"; colorTextoFondo("Puntuaciones invalidas!", blancoBrillante, rojo); cout<<"\n";
+		cout << "\n\n\t"; colorTextoFondo("Puntuaciones inválidas!", blancoBrillante, rojo); cout<<"\n";
 	}
 	
 	c3 = eF.mazosCreados > 0;
-	c4 = repasosCompletados > eF.repasosCancelados;
+	c4 = repasosCompletados > repasosCancelados;
 }
